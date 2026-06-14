@@ -60,8 +60,17 @@ Copy `config.env.example` to `config.env`. See `debian-repo-setup/README.md` for
 
 `make bootstrap` clones any missing `py3.*` repos into the workspace parent directory.
 
+## Operations manual
+
+Step-by-step guides for maintainers:
+
+- [Adding a new Python line (py3.15)](docs/operations.md#1-add-a-new-python-release-line-eg-py315)
+- [Bumping Python patch version (3.14.x)](docs/operations.md#2-bump-python-patch-version-eg-3145--31456)
+- [Adding a new Debian suite](docs/operations.md#3-add-a-new-debian-suite-eg-forky)
+
+Full reference: [docs/operations.md](docs/operations.md)
+
 ## Future work
 
 - GitHub Actions for `build-tools-image` and `build-builder-images`
 - Debian smoke test (install `.deb` files from `dist/` on `trixie` / `unstable`)
-- Operational runbooks for adding a new Python minor or Debian suite
