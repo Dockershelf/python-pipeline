@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import os.path
+import subprocess
+from typing import NoReturn
+
+HERE = os.path.abspath(os.path.dirname(__file__))
+DOCKER_RUN = os.path.join(HERE, 'docker-run')
+
+
+def _user() -> list[str]:
+    ret = ['--user', f'{os.getuid()}:{os.getgid()}']
+    if b'podman' in subprocess.check_output(('docker', 'version')).lower():
+        ret.append('--userns=keep-id')
+    return ret
+
+
+def main() -> NoReturn:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-v', '--volume',
+        dest='volumes',
+        action='append',
+        default=[],
+    )
+    args, rest = parser.parse_known_args()
+
+    cmd = (
+        DOCKER_RUN,
+        *_user(),
+        '--volume', f'{os.getcwd()}:/tmp/src:rw',
+        *(f'--volume={volume}' for volume in args.volumes),
+        'ghcr.io/deadsnakes/tools', *rest,
+    )
+    os.execvp(cmd[0], cmd)
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

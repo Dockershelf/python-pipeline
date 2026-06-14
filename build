@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import os
+import os.path
+import subprocess
+from typing import NoReturn
+
+HERE = os.path.abspath(os.path.dirname(__file__))
+TOOLS = os.path.join(HERE, 'tools')
+DOCKER_RUN = os.path.join(HERE, 'docker-run')
+
+BUILDER_IMAGE = os.environ.get('DOCKERSHELF_BUILDER_IMAGE', 'dockershelf-builder')
+
+
+def _gpg_volumes() -> list[str]:
+    def _gpg(f: str, *, home: str = os.path.expanduser('~')) -> str:
+        return os.path.join(home, '.gnupg', f)
+
+    for paths in (
+        ('pubring.kbx', 'private-keys-v1.d'),
+        ('pubring.gpg', 'secring.gpg'),
+    ):
+        if all(os.path.exists(_gpg(p)) for p in paths):
+            return [
+                f'--volume={_gpg(p)}:{_gpg(p, home="/root")}:ro'
+                for p in paths
+            ]
+    return []
+
+
+def main() -> NoReturn:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--source', action='store_true')
+    parser.add_argument('--git-build', action='store_true')
+    args = parser.parse_args()
+
+    print('*' * 79)
+    print('Parsing target distribution')
+    print('*' * 79)
+    dist = subprocess.check_output((
+        TOOLS, 'dpkg-parsechangelog', '--show-field=distribution',
+    )).decode().strip()
+
+    pwd = os.getcwd()
+    dist_dir = os.path.abspath(os.path.join(pwd, '../python-pipeline/dist'))
+
+    print('*' * 79)
+    print(f'Running build (results will be in {dist_dir})')
+    print('*' * 79)
+    os.makedirs(dist_dir, exist_ok=True)
+    gbp_args = '' if args.source else '-us -uc'
+    gbp_args += (
+        '' if not args.git_build else
+        ' --git-pristine-tar-commit '
+        "--git-upstream-tag='deadsnakes/v%(version%~%_)s'"
+    )
+    extra = '--git-builder="debuild -S -sa"' if args.source else ''
+    prog = (
+        f'chmod 700 ~/.gnupg && '
+        f'apt-get update -qq && '
+        f'mk-build-deps --install --remove --tool "apt-get --yes" /code/debian/control && '
+        f'cp -r /code /tmp && '
+        f'cd /tmp/code && '
+        f'git clean -fxfd && '
+        f'gbp buildpackage {gbp_args} --git-pristine-tar --git-debian-branch=debian/{dist} {extra} && '
+        f'find .. -maxdepth 1 -type f | xargs --replace cp {{}} /dist'
+    )
+    cmd = (
+        DOCKER_RUN,
+        *_gpg_volumes(),
+        '-v', f'{pwd}:/code:ro',
+        '-v', f'{dist_dir}:/dist:rw',
+        f'{BUILDER_IMAGE}/{dist}', 'bash', '-euxc', prog,
+    )
+    os.execvp(cmd[0], cmd)
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
