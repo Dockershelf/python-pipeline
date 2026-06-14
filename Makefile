@@ -16,7 +16,9 @@ PIPELINE := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 WORKSPACE := $(abspath $(PIPELINE)/..)
 DIST_DIR := $(PIPELINE)/dist
 
--include $(PIPELINE)/config.env
+ifneq (,$(wildcard $(PIPELINE)/config.env))
+include $(PIPELINE)/config.env
+endif
 export DOCKERSHELF_BUILDER_IMAGE ?= dockershelf-builder
 export DEBFULLNAME ?= Dockershelf Maintainer
 export DEBEMAIL ?= maintainer@example.com
@@ -30,8 +32,6 @@ export DOCKERSHELF_APT_URL ?= https://apt.dockershelf.example/debian
 export DOCKERSHELF_GITHUB_ORG ?= Dockershelf
 
 PY_VERSIONS := 3.10 3.11 3.12 3.13 3.14
-PY_REPOS := $(foreach v,$(PY_VERSIONS),$(WORKSPACE)/py$(v))
-PY_REPO_URL = https://github.com/$(DOCKERSHELF_GITHUB_ORG)/py$(1).git
 
 .PHONY: all bootstrap clone-py-repos generate-dockerfiles build-builder-images \
 	materialize build build-source publish list-dists help
@@ -54,14 +54,16 @@ help:
 bootstrap: clone-py-repos
 	@echo "Bootstrap complete."
 
-clone-py-repos: $(PY_REPOS)
-
-$(WORKSPACE)/py%:
-	@if [ ! -d "$@/.git" ]; then \
-		git clone --depth 1 "$(call PY_REPO_URL,$*)" "$@"; \
-	else \
-		echo "py$* already cloned"; \
-	fi
+clone-py-repos:
+	@for v in $(PY_VERSIONS); do \
+		target="$(WORKSPACE)/py$$v"; \
+		if [ ! -d "$$target/.git" ]; then \
+			echo "Cloning py$$v..."; \
+			git clone --depth 1 "https://github.com/$(DOCKERSHELF_GITHUB_ORG)/py$$v.git" "$$target"; \
+		else \
+			echo "py$$v already cloned"; \
+		fi; \
+	done
 
 generate-dockerfiles: bootstrap
 	@mkdir -p "$(PIPELINE)/dockerfiles"
