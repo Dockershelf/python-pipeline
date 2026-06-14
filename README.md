@@ -23,6 +23,7 @@ deadsnakes-pipeline/
 cd python-pipeline
 cp config.env.example config.env
 make bootstrap
+make build-tools-image    # gbp, dch, dpkg-parsechangelog
 make build-builder-images
 make materialize PY=3.13 DIST=trixie
 make build PY=3.13
@@ -58,3 +59,9 @@ Copy `config.env.example` to `config.env`. See `debian-repo-setup/README.md` for
 | `../py3.10/` … `../py3.14/` | `https://github.com/Dockershelf/py3.XX` |
 
 `make bootstrap` clones any missing `py3.*` repos into the workspace parent directory.
+
+## Future work
+
+- GitHub Actions for `build-tools-image` and `build-builder-images`
+- Debian smoke test (install `.deb` files from `dist/` on `trixie` / `unstable`)
+- Operational runbooks for adding a new Python minor or Debian suite

@@ -20,6 +20,7 @@ ifneq (,$(wildcard $(PIPELINE)/config.env))
 include $(PIPELINE)/config.env
 endif
 export DOCKERSHELF_BUILDER_IMAGE ?= dockershelf-builder
+export DOCKERSHELF_TOOLS_IMAGE ?= dockershelf-builder/tools
 export DEBFULLNAME ?= Dockershelf Maintainer
 export DEBEMAIL ?= maintainer@example.com
 export DOCKERSHELF_SUITES ?= trixie unstable
@@ -33,19 +34,19 @@ export DOCKERSHELF_GITHUB_ORG ?= Dockershelf
 
 PY_VERSIONS := 3.10 3.11 3.12 3.13 3.14
 
-.PHONY: all bootstrap clone-py-repos generate-dockerfiles build-builder-images \
-	materialize build build-source publish list-dists help
+.PHONY: all bootstrap clone-py-repos build-tools-image generate-dockerfiles build-builder-images \
+	materialize build publish list-dists help
 
 all: help
 
 help:
 	@echo "Targets:"
 	@echo "  bootstrap                 Clone py3.* repos into workspace parent"
+	@echo "  build-tools-image         Build dockershelf-builder/tools (gbp, dch, …)"
 	@echo "  generate-dockerfiles      Generate Dockerfile.{suite} from debian/control"
 	@echo "  build-builder-images      Build dockershelf-builder/* (Debian base)"
 	@echo "  materialize PY=3.13 DIST=trixie"
 	@echo "  build PY=3.13             Build binary .deb packages (unsigned)"
-	@echo "  build-source PY=3.13      Build signed source package"
 	@echo "  publish DIST=trixie       Rsync dist/*.deb to DO droplet + reprepro import"
 	@echo "  list-dists                Show Debian suites per py repo"
 	@echo ""
@@ -65,6 +66,11 @@ clone-py-repos:
 		fi; \
 	done
 
+build-tools-image:
+	@echo "Building $(DOCKERSHELF_TOOLS_IMAGE)"
+	@docker build -t "$(DOCKERSHELF_TOOLS_IMAGE)" \
+		-f "$(PIPELINE)/dockerfiles/Dockerfile.tools" "$(PIPELINE)/dockerfiles"
+
 generate-dockerfiles: bootstrap
 	@mkdir -p "$(PIPELINE)/dockerfiles"
 	@REF="$(WORKSPACE)/py$(DOCKERSHELF_REFERENCE_PY)/debiandirs"; \
@@ -79,7 +85,7 @@ generate-dockerfiles: bootstrap
 			> "$(PIPELINE)/dockerfiles/Dockerfile.$$suite"; \
 	done
 
-build-builder-images: generate-dockerfiles
+build-builder-images: generate-dockerfiles build-tools-image
 	@for suite in $(DOCKERSHELF_SUITES); do \
 		df="$(PIPELINE)/dockerfiles/Dockerfile.$$suite"; \
 		if [ ! -f "$$df" ]; then \
@@ -103,7 +109,7 @@ list-dists:
 		fi; \
 	done
 
-materialize: bootstrap
+materialize: bootstrap build-tools-image
 	@test -n "$(PY)" || (echo "PY required, e.g. make materialize PY=3.13 DIST=trixie" && exit 1)
 	@test -n "$(DIST)" || (echo "DIST required, e.g. DIST=trixie" && exit 1)
 	@case " $(DOCKERSHELF_SUITES) " in \
@@ -112,17 +118,11 @@ materialize: bootstrap
 	esac
 	@cd "$(WORKSPACE)/py$(PY)" && ../python-pipeline/meta-gbp materialize "$(DIST)"
 
-build: bootstrap
+build: bootstrap build-tools-image
 	@test -n "$(PY)" || (echo "PY required" && exit 1)
 	@mkdir -p "$(DIST_DIR)"
 	@cd "$(WORKSPACE)/py$(PY)" && ../python-pipeline/meta-gbp build
 	@echo "Packages written to $(DIST_DIR)/"
-
-build-source: bootstrap
-	@test -n "$(PY)" || (echo "PY required" && exit 1)
-	@mkdir -p "$(DIST_DIR)"
-	@cd "$(WORKSPACE)/py$(PY)" && ../python-pipeline/meta-gbp build --source
-	@echo "Source package written to $(DIST_DIR)/"
 
 publish:
 	@test -n "$(DIST)" || (echo "DIST required, e.g. make publish DIST=trixie" && exit 1)

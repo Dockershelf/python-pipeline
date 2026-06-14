@@ -31,6 +31,7 @@ import tempfile
 from typing import NamedTuple
 
 _DIRNAME_PAT = re.compile(r'^py([0-9]+)\.([0-9]+)$')
+UPSTREAM_TAG_PREFIX = 'dockershelf/v'
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 BUILD = os.path.join(HERE, 'build')
@@ -169,8 +170,8 @@ def _likely_cpython_clone(d: str) -> bool:
 
 def _potential_cpython_clone() -> str | None:
     # + cpython/  <== this one
-    # + deadsnakes/
-    # +  + runbooks/
+    # + deadsnakes-pipeline/
+    # +  + python-pipeline/
     # +  + py3.14/
     # +  +  + cpython/  <== or this one
     if _likely_cpython_clone('../../cpython'):
@@ -256,9 +257,9 @@ def _minimal_nightly_repo() -> int:
     # tag `upstream` with a version we'll use to make the changelog with
     v_match = _current_tag()
     if _is_prerelease(v_match):
-        new_tag = f'deadsnakes/v{v_match[1]}_{v_match[2]}{v_match[3]}'
+        new_tag = f'{UPSTREAM_TAG_PREFIX}{v_match[1]}_{v_match[2]}{v_match[3]}'
     else:
-        new_tag = f'deadsnakes/v{v_match[1]}{v_match[3]}'
+        new_tag = f'{UPSTREAM_TAG_PREFIX}{v_match[1]}{v_match[3]}'
     _cmd_q(*git, 'tag', new_tag)
 
     _cmd_q(*git, 'checkout', '-b', 'debian/unknown')
@@ -439,7 +440,7 @@ def _changelog(message: str, *, only: str | None) -> int:
     return 0
 
 
-def _build(*, source: bool) -> int:
+def _build() -> int:
     if not os.path.exists('work/debian/rules'):
         raise SystemExit('not materialized?')
 
@@ -448,17 +449,8 @@ def _build(*, source: bool) -> int:
     args = []
     if _is_nightly(_current_tag()):
         args.append('--git-build')
-    if source:
-        args.append('--source')
 
     return _cmd_r(BUILD, *args, cwd='work')
-
-
-def _upload() -> int:
-    raise SystemExit(
-        'upload via dput is disabled for Dockershelf.\n'
-        'Publish built .deb files with: make publish (from deadsnakes-pipeline/)',
-    )
 
 
 def main() -> int:
@@ -471,7 +463,6 @@ def main() -> int:
     subparsers = parser.add_subparsers(dest='command', required=True)
 
     build = subparsers.add_parser('build')
-    build.add_argument('--source', action='store_true')
 
     changelog = subparsers.add_parser('changelog')
     changelog.add_argument('-m', '--message', required=True)
@@ -488,22 +479,18 @@ def main() -> int:
         action='store_false',
     )
 
-    subparsers.add_parser('upload')
-
     args = parser.parse_args()
 
     _ensure_submodule_available()
 
     if args.command == 'build':
-        return _build(source=args.source)
+        return _build()
     elif args.command == 'changelog':
         return _changelog(args.message, only=args.only)
     elif args.command == 'materialize':
         return _materialize(args.dist)
     elif args.command == 'update':
         return _update(rev=args.rev, interactive=args.interactive)
-    elif args.command == 'upload':
-        return _upload()
     else:
         raise NotImplementedError(f'{args.command=}')
 
