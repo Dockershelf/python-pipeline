@@ -39,6 +39,11 @@ ALWAYS_DEPS = {
     'devscripts', 'equivs', 'git-buildpackage', 'gnupg', 'pristine-tar',
 }
 
+# Packages listed in control but absent on some suites (e.g. mime-support on sid).
+SKIP_DEPS_BY_CODENAME: dict[str, set[str]] = {
+    'unstable': {'mime-support'},
+}
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -70,6 +75,7 @@ def main() -> int:
     depends = depends[len(DEPENDS):]
 
     deps = set(TO_APT_RE.sub('', depends).split()) | ALWAYS_DEPS
+    deps -= SKIP_DEPS_BY_CODENAME.get(args.codename, set())
 
     print(
         DOCKERFILE_TEMPLATE.format(
