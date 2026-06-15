@@ -42,6 +42,8 @@ Scripts:
 
 Configure on **`Dockershelf/python-pipeline`** and each **`py3.XX`** repo (or at org level).
 
+Run [`scripts/ci-check-config.sh`](../scripts/ci-check-config.sh) to list which secrets/variables are set (values are never printed).
+
 ### Secrets
 
 | Name | Purpose |
