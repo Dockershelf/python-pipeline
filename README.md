@@ -71,7 +71,6 @@ Step-by-step guides for maintainers:
 
 Full reference: [docs/operations.md](docs/operations.md)
 
-## Future work
+## Continuous integration
 
-- GitHub Actions for `build-tools-image` and `build-builder-images`
-- Debian smoke test (install `.deb` files from `dist/` on `trixie` / `unstable`)
+GitHub Actions build GHCR builder images, run `meta-gbp update` / build / smoke test, and publish to the APT droplet. Setup: [docs/ci.md](docs/ci.md).

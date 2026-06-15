@@ -1,0 +1,206 @@
+name: Update meta-gbp
+
+on:
+  workflow_call:
+    inputs:
+      dists-json:
+        required: true
+        type: string
+      publish:
+        type: boolean
+        default: true
+    secrets:
+      PY_REPO_PUSH_TOKEN:
+        required: false
+      DEPLOY_SSH_KEY:
+        required: false
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    outputs:
+      rev: ${{ steps.rev.outputs.rev }}
+      py: ${{ steps.rev.outputs.py }}
+      py_repo_dir: ${{ steps.rev.outputs.py_repo_dir }}
+    steps:
+      - name: Checkout py repo
+        uses: actions/checkout@v4
+        with:
+          path: ${{ github.event.repository.name }}
+          submodules: recursive
+          token: ${{ secrets.PY_REPO_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Checkout python-pipeline
+        uses: actions/checkout@v4
+        with:
+          repository: Dockershelf/python-pipeline
+          path: python-pipeline
+
+      - name: Configure git
+        env:
+          DEBFULLNAME: ${{ vars.DEBFULLNAME }}
+          DEBEMAIL: ${{ vars.DEBEMAIL }}
+        run: |
+          git config --global user.name "${DEBFULLNAME:-github-actions[bot]}"
+          git config --global user.email "${DEBEMAIL:-github-actions[bot]@users.noreply.github.com}"
+
+      - name: Setup workspace
+        run: |
+          PY_REPO_DIR="$GITHUB_WORKSPACE/${{ github.event.repository.name }}"
+          bash python-pipeline/scripts/ci-setup-workspace.sh "$PY_REPO_DIR" "$GITHUB_WORKSPACE/python-pipeline"
+
+      - name: Pull builder images
+        run: bash python-pipeline/scripts/ci-pull-builder-images.sh
+
+      - name: meta-gbp update
+        working-directory: ${{ github.event.repository.name }}
+        run: ../python-pipeline/meta-gbp update --no-interactive
+
+      - name: Push update commits
+        env:
+          TOKEN: ${{ secrets.PY_REPO_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
+        working-directory: ${{ github.event.repository.name }}
+        run: |
+          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
+          if git rev-parse origin/main >/dev/null 2>&1; then
+            ahead="$(git rev-list --count origin/main..HEAD || true)"
+          else
+            ahead="$(git rev-list --count HEAD || true)"
+          fi
+          if [[ "${ahead}" != "0" ]]; then
+            git push origin HEAD:main
+          fi
+
+      - name: Export revision
+        id: rev
+        run: |
+          PY_REPO_DIR="$GITHUB_WORKSPACE/${{ github.event.repository.name }}"
+          echo "rev=$(git -C "$PY_REPO_DIR" rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "py=$(basename "$PY_REPO_DIR" | sed 's/^py//')" >> "$GITHUB_OUTPUT"
+          echo "py_repo_dir=$PY_REPO_DIR" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: update
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        dist: ${{ fromJSON(inputs.dists-json) }}
+    steps:
+      - name: Checkout py repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ needs.update.outputs.rev }}
+          path: ${{ github.event.repository.name }}
+          submodules: recursive
+          token: ${{ secrets.PY_REPO_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Checkout python-pipeline
+        uses: actions/checkout@v4
+        with:
+          repository: Dockershelf/python-pipeline
+          path: python-pipeline
+
+      - name: Configure git
+        env:
+          DEBFULLNAME: ${{ vars.DEBFULLNAME }}
+          DEBEMAIL: ${{ vars.DEBEMAIL }}
+        run: |
+          git config --global user.name "${DEBFULLNAME:-github-actions[bot]}"
+          git config --global user.email "${DEBEMAIL:-github-actions[bot]@users.noreply.github.com}"
+
+      - name: Setup workspace
+        run: |
+          PY_REPO_DIR="$GITHUB_WORKSPACE/${{ github.event.repository.name }}"
+          bash python-pipeline/scripts/ci-setup-workspace.sh "$PY_REPO_DIR" "$GITHUB_WORKSPACE/python-pipeline"
+
+      - name: Pull builder images
+        run: bash python-pipeline/scripts/ci-pull-builder-images.sh
+
+      - name: Materialize and build
+        working-directory: ${{ github.event.repository.name }}
+        run: |
+          ../python-pipeline/meta-gbp materialize "${{ matrix.dist }}"
+          ../python-pipeline/meta-gbp build
+
+      - name: Upload debs
+        uses: actions/upload-artifact@v4
+        with:
+          name: debs-${{ matrix.dist }}
+          path: python-pipeline/dist/*.deb
+          if-no-files-found: error
+
+  smoke:
+    needs: [build, update]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dist: ${{ fromJSON(inputs.dists-json) }}
+    steps:
+      - name: Checkout python-pipeline
+        uses: actions/checkout@v4
+        with:
+          repository: Dockershelf/python-pipeline
+          path: python-pipeline
+          sparse-checkout: |
+            scripts
+
+      - name: Download debs
+        uses: actions/download-artifact@v4
+        with:
+          name: debs-${{ matrix.dist }}
+          path: dist
+
+      - name: Smoke test
+        run: |
+          bash python-pipeline/scripts/debian-smoke-test.sh \
+            --dist "${{ matrix.dist }}" \
+            --py "${{ needs.update.outputs.py }}" \
+            --dist-dir dist
+
+  publish:
+    needs: [smoke, update]
+    if: inputs.publish
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dist: ${{ fromJSON(inputs.dists-json) }}
+    steps:
+      - name: Checkout python-pipeline
+        uses: actions/checkout@v4
+        with:
+          repository: Dockershelf/python-pipeline
+          path: python-pipeline
+          sparse-checkout: |
+            scripts
+            debian-repo-setup
+
+      - name: Download debs
+        uses: actions/download-artifact@v4
+        with:
+          name: debs-${{ matrix.dist }}
+          path: dist
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Publish to APT droplet
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
+          DEPLOY_INCOMING: ${{ vars.DEPLOY_INCOMING }}
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          bash python-pipeline/scripts/ci-publish.sh "${{ matrix.dist }}" dist
