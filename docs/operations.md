@@ -276,6 +276,49 @@ apt update && apt install python3.13
 
 ---
 
+## Legacy cleanup (one-time)
+
+Scripts under `python-pipeline/scripts/` for migrating forks off deadsnakes/Ubuntu artifacts. Run from `python-pipeline/` with workspace parent `..`. **Always dry-run first**; changelog truncation is irreversible.
+
+### Debian-only packaging (`debianize-packaging.sh`)
+
+Strips Ubuntu/ancient-distro branches from `debiandirs/*/rules`, simplifies `tests/test-common.sh`, and installs `debian/openssl.cnf` for autopkgtest `test_ssl`.
+
+```bash
+python3 scripts/debianize-packaging.py --dry-run ..
+python3 scripts/debianize-packaging.sh ..
+```
+
+Verify: `rg 'Ubuntu' ../py3.*/debiandirs/*/rules` should return nothing.
+
+### Changelog truncation (`truncate-changelogs.py`)
+
+Keeps only entries whose distribution matches the file (`trixie` / `unstable`) and renames the source package to `python3.XX` for that repo.
+
+```bash
+python3 scripts/truncate-changelogs.py --dry-run ..
+python3 scripts/truncate-changelogs.py ..
+```
+
+Validate on a Debian host or tools container:
+
+```bash
+dpkg-parsechangelog --file ../py3.14/changelogs/mainline/trixie
+```
+
+Truncated changelogs work better with `meta-gbp update` / `dch` than the old Ubuntu-era history.
+
+### Doc and metadata cleanup (`cleanup-legacy-docs.py`)
+
+Removes orphaned `FAQ.html`, Ubuntu feisty notes from `PVER-dbg.README.Debian.in`, fixes `README.venv` upload wording, neutralizes `pymindeps.py` deadsnakes comment (py3.11), and removes empty `.github/` dirs.
+
+```bash
+python3 scripts/cleanup-legacy-docs.py --dry-run ..
+python3 scripts/cleanup-legacy-docs.py ..
+```
+
+---
+
 ## Quick reference
 
 | Goal | Where | Key command |
