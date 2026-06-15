@@ -16,7 +16,7 @@ on:
         required: false
 
 permissions:
-  contents: read
+  contents: write
   packages: read
 
 jobs:
@@ -70,6 +70,13 @@ jobs:
       - name: meta-gbp update
         run: python-pipeline/meta-gbp update --no-interactive
 
+      - name: Export revision
+        id: rev
+        run: |
+          echo "rev=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "py=$(echo '${{ github.repository }}' | cut -d/ -f2 | sed 's/^py//')" >> "$GITHUB_OUTPUT"
+          echo "py_repo_dir=$GITHUB_WORKSPACE" >> "$GITHUB_OUTPUT"
+
       - name: Push update commits
         env:
           TOKEN: ${{ secrets.PY_REPO_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
@@ -83,13 +90,6 @@ jobs:
           if [[ "${ahead}" != "0" ]]; then
             git push origin HEAD:main
           fi
-
-      - name: Export revision
-        id: rev
-        run: |
-          echo "rev=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          echo "py=$(echo '${{ github.repository }}' | cut -d/ -f2 | sed 's/^py//')" >> "$GITHUB_OUTPUT"
-          echo "py_repo_dir=$GITHUB_WORKSPACE" >> "$GITHUB_OUTPUT"
 
   build:
     needs: update

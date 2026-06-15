@@ -73,6 +73,7 @@ Publish jobs run only when `publish` input is true **and** `DEPLOY_SSH_KEY` is s
 
 2. **Each `py3.XX` repo**
    - Actions → access to `python-pipeline` reusable workflows.
+   - Caller workflow needs `permissions: contents: write` (see each repo `main.yml`) so `meta-gbp update` commits can push with `GITHUB_TOKEN`.
    - Same secrets/variables as above (or inherit org-level).
 
 3. **GHCR package visibility**
