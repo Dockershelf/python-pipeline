@@ -11,6 +11,7 @@ Continuous integration for Dockershelf Python packaging: builder images on GHCR,
 | [`update-meta-gbp.yml`](../.github/workflows/update-meta-gbp.yml) | `python-pipeline` | Reusable: update → build → smoke → publish |
 | [`pr.yml`](../.github/workflows/pr.yml) | `python-pipeline` | `pre-commit` on pull requests |
 | [`publish.yml`](../.github/workflows/publish.yml) | `python-pipeline` | Manual republish of local `dist/` to APT |
+| [`deploy-connectivity.yml`](../.github/workflows/deploy-connectivity.yml) | `python-pipeline` | Manual SSH/incoming-dir check (no rsync) |
 | [`main.yml`](https://github.com/Dockershelf/py3.14/blob/main/.github/workflows/main.yml) | each `py3.XX` | Daily schedule + dispatch → calls reusable workflow |
 
 ## CI workspace layout
@@ -27,6 +28,7 @@ Scripts:
 - [`scripts/ci-pull-builder-images.sh`](../scripts/ci-pull-builder-images.sh) — pull GHCR images or build locally
 - [`scripts/debian-smoke-test.sh`](../scripts/debian-smoke-test.sh) — install `.deb`s in `debian:{suite}-slim`
 - [`scripts/ci-publish.sh`](../scripts/ci-publish.sh) — rsync + `import-incoming.sh`
+- [`scripts/ci-deploy-preflight.sh`](../scripts/ci-deploy-preflight.sh) — validate `DEPLOY_*` vars (optional `--connectivity`)
 
 ## GHCR images
 
@@ -42,7 +44,9 @@ Scripts:
 
 Configure on **`Dockershelf/python-pipeline`** and each **`py3.XX`** repo (or at org level).
 
-Run [`scripts/ci-check-config.sh`](../scripts/ci-check-config.sh) to list which secrets/variables are set (values are never printed).
+Run [`scripts/ci-check-config.sh`](../scripts/ci-check-config.sh) to list which secrets/variables are set (values are never printed). Use `--strict` to fail when deploy configuration is incomplete.
+
+Full droplet + GitHub wiring: [`docs/deploy-setup.md`](deploy-setup.md).
 
 ### Secrets
 
@@ -58,14 +62,14 @@ The first push of `.github/workflows/` to `py3.*` requires a PAT with **`workflo
 
 | Name | Example |
 |------|---------|
-| `DEPLOY_HOST` | `apt.dockershelf.example` |
+| `DEPLOY_HOST` | `apt.luisalejandro.org` |
 | `DEPLOY_USER` | `deploy` |
 | `DEPLOY_DIR` | `/var/www/debian` |
 | `DEPLOY_INCOMING` | `/var/www/debian/incoming` |
 | `DEBFULLNAME` | `Dockershelf Maintainer` |
 | `DEBEMAIL` | `maintainer@example.com` |
 
-Publish jobs run only when `publish` input is true **and** `DEPLOY_SSH_KEY` is set.
+Publish jobs run only when `publish` input is true **and** `DEPLOY_SSH_KEY` is set. When the secret is missing, build and smoke still run and the workflow summary notes that publish was skipped.
 
 ## GitHub settings
 
@@ -113,7 +117,7 @@ Scheduled runs publish when `DEPLOY_SSH_KEY` is configured. Use `workflow_dispat
 | `meta-gbp update` rebase conflict | Resolve locally, push fix, re-run workflow |
 | Builder image pull fails | CI falls back to `make build-tools-image build-builder-images` (slow) |
 | Smoke test `apt-get -f install` fails | Check missing runtime deps in generated `.deb` set |
-| Publish SSH/rsync fails | Verify `DEPLOY_*` variables and `DEPLOY_SSH_KEY` |
+| Publish SSH/rsync fails | Verify `DEPLOY_*` variables and `DEPLOY_SSH_KEY`; run **Deploy connectivity** workflow |
 
 ## Reference py for Dockerfiles
 

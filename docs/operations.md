@@ -265,7 +265,7 @@ make list-dists    # py3.13: trixie unstable forky
 On a Debian `forky` machine:
 
 ```text
-deb [signed-by=…] https://apt.dockershelf.example/debian forky main
+deb [signed-by=…] https://apt.luisalejandro.org/dockershelf forky main
 apt update && apt install python3.13
 ```
 

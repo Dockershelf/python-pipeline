@@ -1,33 +1,18 @@
-name: Publish
+name: Deploy connectivity
 
 on:
   workflow_dispatch:
-    inputs:
-      dist:
-        description: Debian suite (trixie or unstable)
-        required: true
-        type: choice
-        options:
-          - trixie
-          - unstable
 
 jobs:
-  publish:
+  connectivity:
     if: secrets.DEPLOY_SSH_KEY != ''
     runs-on: ubuntu-latest
     steps:
       - name: Checkout python-pipeline
         uses: actions/checkout@v4
-
-      - name: Verify dist artifacts
-        run: |
-          shopt -s nullglob
-          debs=(dist/*.deb)
-          if [[ ${#debs[@]} -eq 0 ]]; then
-            echo "No dist/*.deb in workspace. Upload debs to dist/ or re-run packaging workflow." >&2
-            exit 1
-          fi
-          ls -la dist/*.deb
+        with:
+          sparse-checkout: |
+            scripts
 
       - name: Deploy preflight
         env:
@@ -42,16 +27,15 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
 
-      - name: Publish to APT droplet
+      - name: Verify SSH and incoming directory
         env:
           DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
           DEPLOY_USER: ${{ vars.DEPLOY_USER }}
-          DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
           DEPLOY_INCOMING: ${{ vars.DEPLOY_INCOMING }}
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
-          bash scripts/ci-publish.sh "${{ inputs.dist }}" dist
+          bash scripts/ci-deploy-preflight.sh --connectivity
 
   deploy-not-configured:
     if: secrets.DEPLOY_SSH_KEY == ''

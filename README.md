@@ -50,7 +50,7 @@ Builder images are tagged `dockershelf-builder/<suite>` (e.g. `dockershelf-build
 
 ## Configuration
 
-Copy `config.env.example` to `config.env`. See `debian-repo-setup/README.md` for droplet APT hosting.
+Copy `config.env.example` to `config.env`. Droplet APT hosting: [debian-repo-setup/README.md](debian-repo-setup/README.md). GitHub + DNS wiring: [docs/deploy-setup.md](docs/deploy-setup.md).
 
 ## Source repositories
 
@@ -67,7 +67,6 @@ Step-by-step guides for maintainers:
 - [Adding a new Python line (py3.15)](docs/operations.md#1-add-a-new-python-release-line-eg-py315)
 - [Bumping Python patch version (3.14.x)](docs/operations.md#2-bump-python-patch-version-eg-3145--31456)
 - [Adding a new Debian suite](docs/operations.md#3-add-a-new-debian-suite-eg-forky)
-- [Legacy cleanup scripts](docs/operations.md#legacy-cleanup-one-time) (debianize rules, truncate changelogs)
 
 Full reference: [docs/operations.md](docs/operations.md)
 

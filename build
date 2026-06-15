@@ -49,8 +49,9 @@ def main() -> NoReturn:
     print('*' * 79)
     os.makedirs(dist_dir, exist_ok=True)
     gbp_args = '-us -uc'
+    gpg_setup = 'chmod 700 ~/.gnupg && ' if _gpg_volumes() else ''
     prog = (
-        f'chmod 700 ~/.gnupg && '
+        f'{gpg_setup}'
         f'apt-get update -qq && '
         f'mk-build-deps --install --remove --tool "apt-get --yes" /code/debian/control && '
         f'cp -r /code /tmp && '

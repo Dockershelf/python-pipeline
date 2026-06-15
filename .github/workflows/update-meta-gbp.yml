@@ -185,7 +185,7 @@ jobs:
 
   publish:
     needs: [smoke, update]
-    if: inputs.publish
+    if: inputs.publish && secrets.DEPLOY_SSH_KEY != ''
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -207,6 +207,14 @@ jobs:
           name: debs-${{ matrix.dist }}
           path: dist
 
+      - name: Deploy preflight
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
+          DEPLOY_INCOMING: ${{ vars.DEPLOY_INCOMING }}
+        run: bash python-pipeline/scripts/ci-deploy-preflight.sh
+
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -222,3 +230,18 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
           bash python-pipeline/scripts/ci-publish.sh "${{ matrix.dist }}" dist
+
+  deploy-status:
+    needs: smoke
+    if: always() && needs.smoke.result == 'success' && inputs.publish && secrets.DEPLOY_SSH_KEY == ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish skipped summary
+        run: |
+          {
+            echo "## Publish skipped"
+            echo ""
+            echo "Build and smoke completed. Publish was not run because \`DEPLOY_SSH_KEY\` is not configured."
+            echo ""
+            echo "See [deploy-setup.md](https://github.com/Dockershelf/python-pipeline/blob/main/docs/deploy-setup.md)."
+          } >> "$GITHUB_STEP_SUMMARY"

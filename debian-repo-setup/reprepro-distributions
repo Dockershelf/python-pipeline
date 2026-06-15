@@ -1,17 +1,17 @@
 # Dockershelf APT repository — reprepro distributions
 #
-# Install on the DigitalOcean droplet:
-#   sudo mkdir -p /var/www/debian/conf
-#   sudo cp reprepro-distributions /var/www/debian/conf/distributions
-#   sudo chown -R reprepro:reprepro /var/www/debian   # or your deploy user
+# bootstrap-droplet.sh substitutes SIGNWITH_KEY_ID and installs to
+# /var/www/debian/conf/distributions.
 #
-# Replace SIGNWITH_KEY_ID with your GPG key id (gpg --list-keys --keyid-format long).
+# Manual install:
+#   sudo cp reprepro-distributions /var/www/debian/conf/distributions
+#   # Edit SignWith: lines with your key id (gpg --list-keys --keyid-format long)
 
 Origin: Dockershelf
 Label: Dockershelf Python
 Suite: stable
 Codename: trixie
-Architectures: amd64 arm64 source
+Architectures: amd64 source
 Components: main
 Description: Dockershelf Python packages for Debian trixie
 SignWith: SIGNWITH_KEY_ID
@@ -20,7 +20,7 @@ Origin: Dockershelf
 Label: Dockershelf Python
 Suite: unstable
 Codename: unstable
-Architectures: amd64 arm64 source
+Architectures: amd64 source
 Components: main
 Description: Dockershelf Python packages for Debian unstable
 SignWith: SIGNWITH_KEY_ID
