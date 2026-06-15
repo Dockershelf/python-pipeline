@@ -106,6 +106,7 @@ jobs:
           repository: ${{ github.repository }}
           ref: ${{ needs.update.outputs.rev }}
           submodules: recursive
+          fetch-depth: 0
           token: ${{ secrets.PY_REPO_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Checkout python-pipeline
