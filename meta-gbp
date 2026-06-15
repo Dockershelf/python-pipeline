@@ -211,6 +211,7 @@ def _mainline_repo(dist: str) -> int:
 
     _cmd_q('git', 'init', 'work')
 
+    _pin_cpython_to_release_tag()
     version = Version.parse(_current_tag()[0])
 
     with tempfile.TemporaryDirectory() as td:
@@ -319,12 +320,29 @@ def _update_target() -> str:
     return current
 
 
+def _pin_cpython_to_release_tag() -> str | None:
+    """If cpython HEAD is past a tag, check out that release tag. Returns tag name."""
+    git = ('git', '-C', 'cpython')
+    head = _cmd_o(*git, 'rev-parse', 'HEAD').strip()
+    if not _is_dev_snapshot(_describe_at(head)):
+        return None
+    tag = _cmd_o(*git, 'describe', '--abbrev=0', '--tags', '--match', 'v*').strip()
+    if _cmd_o(*git, 'rev-parse', tag).strip() == head:
+        return None
+    _cmd_q(*git, 'checkout', tag)
+    return tag
+
+
 def _update(*, rev: str | None, interactive: bool) -> int:
     if rev is None:
         rev = _update_target()
 
     current_rev = _cmd_o('git', '-C', 'cpython', 'rev-parse', 'HEAD').strip()
     if current_rev == rev:
+        pinned = _pin_cpython_to_release_tag()
+        if pinned is not None:
+            _cmd_q('git', 'add', 'cpython')
+            _cmd_q('git', 'commit', '-m', f'cpython: pin to release {pinned}')
         print('already up to date!', file=sys.stderr)
         return 0
 
