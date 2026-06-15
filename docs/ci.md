@@ -76,7 +76,11 @@ Publish jobs run only when `publish` input is true **and** `DEPLOY_SSH_KEY` is s
    - Same secrets/variables as above (or inherit org-level).
 
 3. **GHCR package visibility**
-   - `dockershelf-builder` packages: visible to org members / linked repos so `py3.*` workflows can `docker pull`.
+   - Link each `dockershelf-builder/*` package to `py3.10` … `py3.14` under **Package settings → Manage Actions access**, or make packages **public**.
+   - Caller workflows use `permissions: packages: read`.
+   - If `docker pull` is denied, CI builds from committed `dockerfiles/Dockerfile.*`.
+
+**Git push** of workflow files requires a PAT with **`workflow`** scope; use `gh auth token` after `gh auth login -s workflow`.
 
 ## Schedule (UTC)
 

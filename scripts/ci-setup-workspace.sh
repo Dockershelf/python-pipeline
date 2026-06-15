@@ -29,6 +29,7 @@ for f in meta-gbp build docker-run tools; do
 done
 
 git -C "$PY_REPO_DIR" submodule update --init cpython
+git -C "$PY_REPO_DIR/cpython" fetch --tags origin
 
 export PY_REPO_DIR
 export PIPELINE_DIR
