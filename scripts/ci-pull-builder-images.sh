@@ -26,12 +26,22 @@ pull_or_build() {
 if pull_or_build "$DOCKERSHELF_TOOLS_IMAGE"; then
   for suite in $SUITES; do
     pull_or_build "${DOCKERSHELF_BUILDER_IMAGE}/${suite}" || {
-      echo "falling back to local make build-tools-image build-builder-images"
-      make -C "$PIPELINE_DIR" build-tools-image build-builder-images
+      echo "falling back to local docker build from committed Dockerfiles"
+      docker build -t "$DOCKERSHELF_TOOLS_IMAGE" \
+        -f "$PIPELINE_DIR/dockerfiles/Dockerfile.tools" "$PIPELINE_DIR/dockerfiles"
+      for s in $SUITES; do
+        docker build -t "${DOCKERSHELF_BUILDER_IMAGE}/${s}" \
+          -f "$PIPELINE_DIR/dockerfiles/Dockerfile.${s}" "$PIPELINE_DIR/dockerfiles"
+      done
       exit 0
     }
   done
 else
-  echo "falling back to local make build-tools-image build-builder-images"
-  make -C "$PIPELINE_DIR" build-tools-image build-builder-images
+  echo "falling back to local docker build from committed Dockerfiles"
+  docker build -t "$DOCKERSHELF_TOOLS_IMAGE" \
+    -f "$PIPELINE_DIR/dockerfiles/Dockerfile.tools" "$PIPELINE_DIR/dockerfiles"
+  for s in $SUITES; do
+    docker build -t "${DOCKERSHELF_BUILDER_IMAGE}/${s}" \
+      -f "$PIPELINE_DIR/dockerfiles/Dockerfile.${s}" "$PIPELINE_DIR/dockerfiles"
+  done
 fi
