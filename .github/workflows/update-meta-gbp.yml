@@ -57,6 +57,13 @@ jobs:
             "$GITHUB_WORKSPACE/py" \
             "$GITHUB_WORKSPACE/python-pipeline"
 
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Pull builder images
         env:
           PIPELINE_DIR: ${{ github.workspace }}/python-pipeline
@@ -127,6 +134,13 @@ jobs:
           bash python-pipeline/scripts/ci-setup-workspace.sh \
             "$GITHUB_WORKSPACE/py" \
             "$GITHUB_WORKSPACE/python-pipeline"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull builder images
         env:

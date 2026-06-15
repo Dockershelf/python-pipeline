@@ -1,4 +1,2 @@
 config.env
 dist/
-dockerfiles/Dockerfile.trixie
-dockerfiles/Dockerfile.unstable

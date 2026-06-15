@@ -1,0 +1,46 @@
+# Created with `/Users/luisalejandro/Development/dockershelf/deadsnakes-pipeline/python-pipeline/make-new-image --codename trixie /Users/luisalejandro/Development/dockershelf/deadsnakes-pipeline/py3.13/debiandirs/trixie/control` DO NOT EDIT
+FROM debian:trixie-slim
+RUN : \
+    && apt-get update -qq \
+    && DEBIAN_FRONTEND=noninteractive apt-get install \
+        -qq -y --no-install-recommends \
+        autoconf \
+        blt-dev \
+        build-essential:arm64 \
+        bzip2 \
+        debhelper \
+        devscripts \
+        dpkg-dev \
+        equivs \
+        git-buildpackage \
+        gnupg \
+        libbluetooth-dev \
+        libbz2-dev \
+        libdb-dev \
+        libexpat1-dev \
+        libffi-dev \
+        libgdbm-dev \
+        libgpm2 \
+        liblzma-dev \
+        libncursesw5-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        libssl-dev \
+        locales \
+        lsb-release \
+        media-types \
+        net-tools \
+        netbase \
+        pristine-tar \
+        python3-sphinx \
+        python3:any \
+        quilt \
+        sharutils \
+        texinfo \
+        time \
+        tk-dev \
+        xauth \
+        xvfb \
+        zlib1g-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
