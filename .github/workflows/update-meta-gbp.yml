@@ -22,6 +22,9 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
+    env:
+      DEBFULLNAME: ${{ vars.DEBFULLNAME || 'Dockershelf Maintainer' }}
+      DEBEMAIL: ${{ vars.DEBEMAIL || '41898282+github-actions[bot]@users.noreply.github.com' }}
     outputs:
       rev: ${{ steps.rev.outputs.rev }}
       py: ${{ steps.rev.outputs.py }}
@@ -41,12 +44,9 @@ jobs:
           path: python-pipeline
 
       - name: Configure git
-        env:
-          DEBFULLNAME: ${{ vars.DEBFULLNAME }}
-          DEBEMAIL: ${{ vars.DEBEMAIL }}
         run: |
-          git config --global user.name "${DEBFULLNAME:-github-actions[bot]}"
-          git config --global user.email "${DEBEMAIL:-github-actions[bot]@users.noreply.github.com}"
+          git config --global user.name "${DEBFULLNAME}"
+          git config --global user.email "${DEBEMAIL}"
 
       - name: Setup workspace
         run: |
@@ -94,6 +94,9 @@ jobs:
   build:
     needs: update
     runs-on: ubuntu-latest
+    env:
+      DEBFULLNAME: ${{ vars.DEBFULLNAME || 'Dockershelf Maintainer' }}
+      DEBEMAIL: ${{ vars.DEBEMAIL || '41898282+github-actions[bot]@users.noreply.github.com' }}
     timeout-minutes: 360
     strategy:
       fail-fast: false
@@ -116,12 +119,9 @@ jobs:
           path: python-pipeline
 
       - name: Configure git
-        env:
-          DEBFULLNAME: ${{ vars.DEBFULLNAME }}
-          DEBEMAIL: ${{ vars.DEBEMAIL }}
         run: |
-          git config --global user.name "${DEBFULLNAME:-github-actions[bot]}"
-          git config --global user.email "${DEBEMAIL:-github-actions[bot]@users.noreply.github.com}"
+          git config --global user.name "${DEBFULLNAME}"
+          git config --global user.email "${DEBEMAIL}"
 
       - name: Setup workspace
         run: |

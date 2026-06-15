@@ -106,6 +106,7 @@ Scheduled runs publish when `DEPLOY_SSH_KEY` is configured. Use `workflow_dispat
 
 | Failure | Action |
 |---------|--------|
+| `meta-gbp update` / `dch` exit 25 | Changelog heading has a space before `)` (e.g. `1+trixie1 )`). Run [`scripts/fix-changelog-headings.sh`](../scripts/fix-changelog-headings.sh) on the py repo; CI runs this automatically via `ci-setup-workspace.sh` |
 | `meta-gbp update` rebase conflict | Resolve locally, push fix, re-run workflow |
 | Builder image pull fails | CI falls back to `make build-tools-image build-builder-images` (slow) |
 | Smoke test `apt-get -f install` fails | Check missing runtime deps in generated `.deb` set |

@@ -31,6 +31,10 @@ done
 git -C "$PY_REPO_DIR" submodule update --init cpython
 git -C "$PY_REPO_DIR/cpython" fetch --tags origin
 
+if [[ -x "$PIPELINE_DIR/scripts/fix-changelog-headings.sh" ]]; then
+    bash "$PIPELINE_DIR/scripts/fix-changelog-headings.sh" "$PY_REPO_DIR"
+fi
+
 export PY_REPO_DIR
 export PIPELINE_DIR
 export DOCKERSHELF_BUILDER_IMAGE="${DOCKERSHELF_BUILDER_IMAGE:-ghcr.io/dockershelf/dockershelf-builder}"
