@@ -185,7 +185,7 @@ jobs:
 
   publish:
     needs: [smoke, update]
-    if: inputs.publish && secrets.DEPLOY_SSH_KEY != ''
+    if: inputs.publish && vars.DEPLOY_HOST != ''
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -232,8 +232,8 @@ jobs:
           bash python-pipeline/scripts/ci-publish.sh "${{ matrix.dist }}" dist
 
   deploy-status:
-    needs: smoke
-    if: always() && needs.smoke.result == 'success' && inputs.publish && secrets.DEPLOY_SSH_KEY == ''
+    needs: [smoke, publish]
+    if: always() && needs.smoke.result == 'success' && inputs.publish && needs.publish.result == 'skipped'
     runs-on: ubuntu-latest
     steps:
       - name: Publish skipped summary
@@ -241,7 +241,7 @@ jobs:
           {
             echo "## Publish skipped"
             echo ""
-            echo "Build and smoke completed. Publish was not run because \`DEPLOY_SSH_KEY\` is not configured."
+            echo "Build and smoke completed. Publish was not run because deploy variables are not configured (\`DEPLOY_HOST\` empty)."
             echo ""
             echo "See [deploy-setup.md](https://github.com/Dockershelf/python-pipeline/blob/main/docs/deploy-setup.md)."
           } >> "$GITHUB_STEP_SUMMARY"

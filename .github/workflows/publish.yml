@@ -13,9 +13,17 @@ on:
 
 jobs:
   publish:
-    if: secrets.DEPLOY_SSH_KEY != ''
     runs-on: ubuntu-latest
     steps:
+      - name: Require deploy configuration
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+        run: |
+          if [[ -z "$DEPLOY_HOST" ]]; then
+            echo "DEPLOY_HOST is not configured. See docs/deploy-setup.md." >&2
+            exit 1
+          fi
+
       - name: Checkout python-pipeline
         uses: actions/checkout@v4
 
@@ -52,12 +60,3 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
           bash scripts/ci-publish.sh "${{ inputs.dist }}" dist
-
-  deploy-not-configured:
-    if: secrets.DEPLOY_SSH_KEY == ''
-    runs-on: ubuntu-latest
-    steps:
-      - name: Missing deploy secret
-        run: |
-          echo "DEPLOY_SSH_KEY is not configured. See docs/deploy-setup.md." >&2
-          exit 1

@@ -69,7 +69,7 @@ The first push of `.github/workflows/` to `py3.*` requires a PAT with **`workflo
 | `DEBFULLNAME` | `Dockershelf Maintainer` |
 | `DEBEMAIL` | `maintainer@example.com` |
 
-Publish jobs run only when `publish` input is true **and** `DEPLOY_SSH_KEY` is set. When the secret is missing, build and smoke still run and the workflow summary notes that publish was skipped.
+Publish jobs run only when `publish` input is true **and** `DEPLOY_HOST` is set. When deploy variables are missing, build and smoke still run and the workflow summary notes that publish was skipped.
 
 ## GitHub settings
 
