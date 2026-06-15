@@ -39,6 +39,7 @@ jobs:
         env:
           DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
           DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
           DEPLOY_INCOMING: ${{ vars.DEPLOY_INCOMING }}
         run: |
           mkdir -p ~/.ssh
