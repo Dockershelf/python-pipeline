@@ -34,6 +34,7 @@ DOCKERFILE_TEMPLATE = (
 
 DEPENDS = ' Depends:'
 TO_APT_RE = re.compile(r'(,| \([^)]+\))')
+ARCH_QUAL_RE = re.compile(r':(?:any|amd64|arm64|armhf)$')
 
 ALWAYS_DEPS = {
     'devscripts', 'equivs', 'git-buildpackage', 'gnupg', 'pristine-tar',
@@ -75,6 +76,7 @@ def main() -> int:
     depends = depends[len(DEPENDS):]
 
     deps = set(TO_APT_RE.sub('', depends).split()) | ALWAYS_DEPS
+    deps = {ARCH_QUAL_RE.sub('', d) for d in deps}
     deps -= SKIP_DEPS_BY_CODENAME.get(args.codename, set())
 
     print(
