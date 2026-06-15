@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""meta-gbp: manages mainline and nightly releases for Dockershelf Debian packaging
+"""meta-gbp: manages mainline releases for Dockershelf Debian packaging
 
 normally everything happens automatically!
 
@@ -79,8 +79,11 @@ class Version(NamedTuple):
     @classmethod
     def parse(cls, s: str) -> Version:
         match = VERSION_RE.fullmatch(s)
-        if not match or _is_nightly(match):
-            raise ValueError(f'expected bare version, got {s}')
+        if not match or _is_dev_snapshot(match):
+            raise ValueError(
+                f'expected a release tag (e.g. v3.14.6), got {s}; '
+                'checkout cpython at an upstream release tag'
+            )
         return cls(match[1], match[2])
 
 
@@ -112,8 +115,20 @@ def _is_prerelease(v_match: re.Match[str]) -> bool:
     return bool(v_match[2])
 
 
-def _is_nightly(v_match: re.Match[str]) -> bool:
+def _is_dev_snapshot(v_match: re.Match[str]) -> bool:
+    """True when describe is past a tag (e.g. v3.14.6-41-gabc123)."""
     return bool(v_match[3])
+
+
+def _describe_at(rev: str) -> re.Match[str]:
+    git = ('git', '-C', 'cpython')
+    tag = _cmd_o(
+        *git, 'describe', '--abbrev=10', '--tags', '--match', 'v*', rev,
+    ).rstrip()
+    match = VERSION_RE.fullmatch(tag)
+    if match is None:
+        raise SystemExit(f'Unexpected tag at {rev}: {tag}')
+    return match
 
 
 def _p_cmd(cmd: tuple[str, ...], cwd: str | None) -> None:
@@ -149,7 +164,6 @@ def _cmd_r(*cmd: str, cwd: str | None = None) -> int:
 def _validate_meta_gbp_dir() -> None:
     for path in (
         'changelogs/mainline',
-        'changelogs/nightly',
         'cpython',
         'debiandirs',
         'patches',
@@ -159,25 +173,15 @@ def _validate_meta_gbp_dir() -> None:
 
     assert _py_ver()
 
-    mainline_dists = sorted(os.listdir('changelogs/mainline'))
-    nightly_dists = sorted(os.listdir('changelogs/nightly'))
-    assert mainline_dists == nightly_dists, (mainline_dists, nightly_dists)
-
 
 def _likely_cpython_clone(d: str) -> bool:
     return os.path.isdir(d) and os.path.exists(os.path.join(d, 'Python'))
 
 
 def _potential_cpython_clone() -> str | None:
-    # + cpython/  <== this one
-    # + deadsnakes-pipeline/
-    # +  + python-pipeline/
-    # +  + py3.14/
-    # +  +  + cpython/  <== or this one
     if _likely_cpython_clone('../../cpython'):
         return '../../cpython'
 
-    # first check: ../py*/cpython
     for dname in os.listdir('..'):
         if dname.startswith('py'):
             dname = os.path.abspath(os.path.join('..', dname))
@@ -196,10 +200,8 @@ def _reference_args() -> tuple[str, ...]:
 
 
 def _ensure_submodule_available() -> None:
-    # if the submodule doesn't exist at all
     if not os.path.isdir('cpython/Python'):
         _cmd_q('git', 'submodule', 'update', '--init', *_reference_args())
-    # if the submodule is at an unknown revision
     if _cmd_r('git', 'diff', '--quiet', '--no-ext-diff', 'cpython'):
         _cmd_q('git', 'submodule', 'update', '--init')
 
@@ -246,7 +248,8 @@ def _mainline_repo(dist: str) -> int:
     return 0
 
 
-def _minimal_nightly_repo() -> int:
+def _patch_queue_worktree() -> int:
+    """Minimal debian/ tree for gbp pq during meta-gbp update."""
     _cmd_q('rm', '-rf', 'work')
     _cmd_q('git', 'clone', 'cpython', 'work')
 
@@ -254,7 +257,6 @@ def _minimal_nightly_repo() -> int:
 
     _cmd_q(*git, 'branch', 'upstream')
 
-    # tag `upstream` with a version we'll use to make the changelog with
     v_match = _current_tag()
     if _is_prerelease(v_match):
         new_tag = f'{UPSTREAM_TAG_PREFIX}{v_match[1]}_{v_match[2]}{v_match[3]}'
@@ -264,7 +266,6 @@ def _minimal_nightly_repo() -> int:
 
     _cmd_q(*git, 'checkout', '-b', 'debian/unknown')
 
-    # this is the minimal `debian` directory for `gbp pq`
     os.makedirs('work/debian')
     open('work/debian/control', 'a+').close()
     shutil.copytree('patches', 'work/debian/patches')
@@ -275,33 +276,8 @@ def _minimal_nightly_repo() -> int:
     return 0
 
 
-def _nightly_repo(dist: str) -> int:
-    ret = _minimal_nightly_repo()
-    if ret:
-        return ret
-
-    git = ('git', '-C', 'work')
-
-    _cmd_q(*git, 'branch', '-m', f'debian/{dist}')
-
-    # recreate the non-minimal debian directory
-    _cmd_q('rm', '-rf', 'work/debian')
-
-    shutil.copytree(f'debiandirs/{dist}', 'work/debian')
-    shutil.copy(f'changelogs/nightly/{dist}', 'work/debian/changelog')
-    shutil.copytree('patches', 'work/debian/patches')
-
-    _cmd_q(*git, 'add', 'debian')
-    _cmd_q(*git, 'commit', '-q', '-m', f'meta-gbp: init for {dist}')
-
-    return 0
-
-
 def _materialize(dist: str) -> int:
-    if _is_nightly(_current_tag()):
-        return _nightly_repo(dist)
-    else:
-        return _mainline_repo(dist)
+    return _mainline_repo(dist)
 
 
 def _update_target() -> str:
@@ -313,36 +289,34 @@ def _update_target() -> str:
     fetch = (*git, 'fetch', 'origin')
 
     try:
-        # normal
         _cmd_q(*fetch, f'refs/heads/{ver}:refs/heads/cpython')
     except SystemExit:
         try:
-            # eol
             _cmd_q(*fetch, f'refs/tags/{ver}:refs/tags/{ver}')
             _cmd_q(*git, 'update-ref', 'refs/heads/cpython', f'{ver}~0')
             _cmd_q(*git, 'tag', '--delete', ver)
         except SystemExit:
-            # nightly
-            _cmd_q(*fetch, 'refs/heads/main:refs/heads/cpython')
+            raise SystemExit(
+                f'no upstream branch or tag {ver} on cpython; '
+                'cannot update without a release branch'
+            )
 
     current = _cmd_o(*git, 'rev-parse', 'HEAD').strip()
 
-    log_output = _cmd_o(
+    for rev in _cmd_o(
         *git, 'log',
         '--reverse',
         '--decorate-refs=refs/tags/',
         '--format=%H',
         '--simplify-by-decoration',
-        # XXX: HEAD may not be the exact submodule version?
         'HEAD..cpython',
-    )
-    for line in log_output.splitlines():
-        if line == current:
+    ).splitlines():
+        if rev == current:
             continue
-        else:
-            return line
-    else:
-        return _cmd_o(*git, 'rev-parse', 'cpython').strip()
+        if not _is_dev_snapshot(_describe_at(rev)):
+            return rev
+
+    return current
 
 
 def _update(*, rev: str | None, interactive: bool) -> int:
@@ -354,7 +328,7 @@ def _update(*, rev: str | None, interactive: bool) -> int:
         print('already up to date!', file=sys.stderr)
         return 0
 
-    _minimal_nightly_repo()
+    _patch_queue_worktree()
 
     git_work = ('git', '-C', 'work')
 
@@ -384,12 +358,7 @@ def _update(*, rev: str | None, interactive: bool) -> int:
 
     v_match = _current_tag()
 
-    if _is_nightly(v_match):
-        changelog_target = 'nightly'
-    else:
-        changelog_target = 'mainline'
-
-    for dist in os.listdir(f'changelogs/{changelog_target}'):
+    for dist in os.listdir('changelogs/mainline'):
         if _is_prerelease(v_match):
             debian_version = f'{v_match[1]}~{v_match[2]}{v_match[3]}-1+{dist}1'
         else:
@@ -399,12 +368,12 @@ def _update(*, rev: str | None, interactive: bool) -> int:
             '--newversion', debian_version,
             '--distribution', dist,
             '--force-distribution',
-            '--changelog', f'changelogs/{changelog_target}/{dist}',
+            '--changelog', f'changelogs/mainline/{dist}',
             f'Update to {v_match[0]}.',
         )
 
     _cmd_q('git', 'add', 'changelogs', 'cpython', 'patches')
-    _cmd_q('git', 'commit', '-m', f'update to {rev} ({changelog_target})')
+    _cmd_q('git', 'commit', '-m', f'update to {rev} (mainline)')
 
     return 0
 
@@ -446,11 +415,7 @@ def _build() -> int:
 
     _cmd_q('rm', '-rf', 'dist')
 
-    args = []
-    if _is_nightly(_current_tag()):
-        args.append('--git-build')
-
-    return _cmd_r(BUILD, *args, cwd='work')
+    return _cmd_r(BUILD, cwd='work')
 
 
 def main() -> int:
@@ -462,7 +427,7 @@ def main() -> int:
 
     subparsers = parser.add_subparsers(dest='command', required=True)
 
-    build = subparsers.add_parser('build')
+    subparsers.add_parser('build')
 
     changelog = subparsers.add_parser('changelog')
     changelog.add_argument('-m', '--message', required=True)

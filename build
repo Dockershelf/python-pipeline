@@ -32,8 +32,7 @@ def _gpg_volumes() -> list[str]:
 
 def main() -> NoReturn:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--git-build', action='store_true')
-    args = parser.parse_args()
+    parser.parse_args()
 
     print('*' * 79)
     print('Parsing target distribution')
@@ -50,11 +49,6 @@ def main() -> NoReturn:
     print('*' * 79)
     os.makedirs(dist_dir, exist_ok=True)
     gbp_args = '-us -uc'
-    gbp_args += (
-        '' if not args.git_build else
-        ' --git-pristine-tar-commit '
-        "--git-upstream-tag='dockershelf/v%(version%~%_)s'"
-    )
     prog = (
         f'chmod 700 ~/.gnupg && '
         f'apt-get update -qq && '

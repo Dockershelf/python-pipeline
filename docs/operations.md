@@ -44,8 +44,6 @@ Keep `control.in` and `control` in sync. After bulk updates:
 python3 scripts/bump-mainline-changelog.py -m 'Your message.' ..
 ```
 
-**Nightly changelog HEAD maintainer** (no version bump): `python3 scripts/fix-nightly-changelog-maintainer.py ..`
-
 ---
 
 ## 1. Add a new Python release line (e.g. py3.15)
@@ -88,8 +86,6 @@ debiandirs/trixie/
 debiandirs/unstable/
 changelogs/mainline/trixie
 changelogs/mainline/unstable
-changelogs/nightly/trixie      # required — must match mainline suite list
-changelogs/nightly/unstable
 ```
 
 Set initial changelog versions, e.g. `3.15.0-1+trixie1` and `3.15.0-1+unstable1`, with `distribution:` set to `trixie` / `unstable`.
@@ -149,7 +145,7 @@ git submodule update --init cpython
 
 1. Fetches the next CPython revision to import.
 2. Rebases `patches/` via `gbp pq`.
-3. Writes new changelog entries for **every** suite in `changelogs/mainline/` (or `nightly/` for pre-releases).
+3. Writes new changelog entries for **every** suite in `changelogs/mainline/`.
 
 If the patch queue does not rebase cleanly, resolve conflicts interactively (default). To fail fast instead of opening a shell:
 
@@ -211,11 +207,10 @@ For **each** `py3.XX` you intend to support on the new suite:
    # edit forky/control, forky/rules, …
    ```
 
-2. **Add changelogs** for both tracks:
+2. **Add changelogs:**
 
    ```bash
    cp changelogs/mainline/trixie changelogs/mainline/forky
-   cp changelogs/nightly/trixie changelogs/nightly/forky
    # edit distribution field and version suffix: 3.13.x-1+forky1
    ```
 
@@ -276,49 +271,6 @@ apt update && apt install python3.13
 
 ---
 
-## Legacy cleanup (one-time)
-
-Scripts under `python-pipeline/scripts/` for migrating forks off deadsnakes/Ubuntu artifacts. Run from `python-pipeline/` with workspace parent `..`. **Always dry-run first**; changelog truncation is irreversible.
-
-### Debian-only packaging (`debianize-packaging.sh`)
-
-Strips Ubuntu/ancient-distro branches from `debiandirs/*/rules`, simplifies `tests/test-common.sh`, and installs `debian/openssl.cnf` for autopkgtest `test_ssl`.
-
-```bash
-python3 scripts/debianize-packaging.py --dry-run ..
-python3 scripts/debianize-packaging.sh ..
-```
-
-Verify: `rg 'Ubuntu' ../py3.*/debiandirs/*/rules` should return nothing.
-
-### Changelog truncation (`truncate-changelogs.py`)
-
-Keeps only entries whose distribution matches the file (`trixie` / `unstable`) and renames the source package to `python3.XX` for that repo.
-
-```bash
-python3 scripts/truncate-changelogs.py --dry-run ..
-python3 scripts/truncate-changelogs.py ..
-```
-
-Validate on a Debian host or tools container:
-
-```bash
-dpkg-parsechangelog --file ../py3.14/changelogs/mainline/trixie
-```
-
-Truncated changelogs work better with `meta-gbp update` / `dch` than the old Ubuntu-era history.
-
-### Doc and metadata cleanup (`cleanup-legacy-docs.py`)
-
-Removes orphaned `FAQ.html`, Ubuntu feisty notes from `PVER-dbg.README.Debian.in`, fixes `README.venv` upload wording, neutralizes `pymindeps.py` deadsnakes comment (py3.11), and removes empty `.github/` dirs.
-
-```bash
-python3 scripts/cleanup-legacy-docs.py --dry-run ..
-python3 scripts/cleanup-legacy-docs.py ..
-```
-
----
-
 ## Quick reference
 
 | Goal | Where | Key command |
@@ -338,7 +290,7 @@ python3 scripts/cleanup-legacy-docs.py ..
 
 **`meta-gbp update` rebase fails** — run with interactive mode; fix conflicts under `work/`, complete rebase, exit 0 so `gbp pq export` runs.
 
-**`make materialize` fails validation** — `changelogs/mainline` and `changelogs/nightly` must list the same suite names; each needs a matching `debiandirs/<suite>/`.
+**`make materialize` fails validation** — each suite under `changelogs/mainline/` needs a matching `debiandirs/<suite>/`. The `cpython` submodule must be at an upstream **release tag**, not a post-tag development snapshot.
 
 **Build fails on `mk-build-deps`** — regenerate builder image: `make generate-dockerfiles && make build-builder-images`. Suite `control` Build-Depends may need tuning for Debian.
 
