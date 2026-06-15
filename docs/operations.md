@@ -23,7 +23,28 @@ make bootstrap
 make build-tools-image
 ```
 
-Ensure `DEBFULLNAME` and `DEBEMAIL` are set in `config.env` (or your git config).
+### Maintainer identity and package metadata
+
+**Changelog entries** (`meta-gbp changelog`, `meta-gbp update`) use `DEBFULLNAME` and `DEBEMAIL` when set in `config.env`; otherwise `git config user.name` and `git config user.email` (via `docker-run`).
+
+**`debian/control.in` and `debian/control`** in each `py3.XX` repo should list:
+
+- `Maintainer:` — same identity as above
+- `Vcs-Browser:` / `Vcs-Git:` — `https://github.com/Dockershelf/py3.XX` (not Debian salsa)
+
+Keep `control.in` and `control` in sync. After bulk updates:
+
+```bash
+./scripts/retarget-py3-control.sh   # from python-pipeline/
+```
+
+**Packaging-only mainline changelog** (no upstream bump): `meta-gbp changelog -m '...' --only trixie`. If legacy changelog formatting breaks `dch`, use:
+
+```bash
+python3 scripts/bump-mainline-changelog.py -m 'Your message.' ..
+```
+
+**Nightly changelog HEAD maintainer** (no version bump): `python3 scripts/fix-nightly-changelog-maintainer.py ..`
 
 ---
 

@@ -21,8 +21,12 @@ include $(PIPELINE)/config.env
 endif
 export DOCKERSHELF_BUILDER_IMAGE ?= dockershelf-builder
 export DOCKERSHELF_TOOLS_IMAGE ?= dockershelf-builder/tools
-export DEBFULLNAME ?= Dockershelf Maintainer
-export DEBEMAIL ?= maintainer@example.com
+ifdef DEBFULLNAME
+export DEBFULLNAME
+endif
+ifdef DEBEMAIL
+export DEBEMAIL
+endif
 export DOCKERSHELF_SUITES ?= trixie unstable
 export DOCKERSHELF_REFERENCE_PY ?= 3.13
 export DOCKERSHELF_DEPLOY_HOST ?= apt.dockershelf.example
