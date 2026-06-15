@@ -19,9 +19,6 @@ permissions:
   contents: read
   packages: read
 
-env:
-  PY_CHECKOUT_PATH: py
-
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -33,7 +30,6 @@ jobs:
       - name: Checkout py repo
         uses: actions/checkout@v4
         with:
-          path: py
           submodules: recursive
           token: ${{ secrets.PY_REPO_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
 
@@ -54,7 +50,7 @@ jobs:
       - name: Setup workspace
         run: |
           bash python-pipeline/scripts/ci-setup-workspace.sh \
-            "$GITHUB_WORKSPACE/py" \
+            "$GITHUB_WORKSPACE" \
             "$GITHUB_WORKSPACE/python-pipeline"
 
       - name: Log in to GHCR
@@ -71,13 +67,11 @@ jobs:
         run: bash python-pipeline/scripts/ci-pull-builder-images.sh
 
       - name: meta-gbp update
-        working-directory: py
-        run: ../python-pipeline/meta-gbp update --no-interactive
+        run: python-pipeline/meta-gbp update --no-interactive
 
       - name: Push update commits
         env:
           TOKEN: ${{ secrets.PY_REPO_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
-        working-directory: py
         run: |
           git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
           if git rev-parse origin/main >/dev/null 2>&1; then
@@ -92,10 +86,9 @@ jobs:
       - name: Export revision
         id: rev
         run: |
-          PY_REPO_DIR="$GITHUB_WORKSPACE/py"
-          echo "rev=$(git -C "$PY_REPO_DIR" rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "rev=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "py=$(echo '${{ github.repository }}' | cut -d/ -f2 | sed 's/^py//')" >> "$GITHUB_OUTPUT"
-          echo "py_repo_dir=$PY_REPO_DIR" >> "$GITHUB_OUTPUT"
+          echo "py_repo_dir=$GITHUB_WORKSPACE" >> "$GITHUB_OUTPUT"
 
   build:
     needs: update
@@ -111,7 +104,6 @@ jobs:
         with:
           repository: ${{ github.repository }}
           ref: ${{ needs.update.outputs.rev }}
-          path: py
           submodules: recursive
           token: ${{ secrets.PY_REPO_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
 
@@ -132,7 +124,7 @@ jobs:
       - name: Setup workspace
         run: |
           bash python-pipeline/scripts/ci-setup-workspace.sh \
-            "$GITHUB_WORKSPACE/py" \
+            "$GITHUB_WORKSPACE" \
             "$GITHUB_WORKSPACE/python-pipeline"
 
       - name: Log in to GHCR
@@ -149,10 +141,9 @@ jobs:
         run: bash python-pipeline/scripts/ci-pull-builder-images.sh
 
       - name: Materialize and build
-        working-directory: py
         run: |
-          ../python-pipeline/meta-gbp materialize "${{ matrix.dist }}"
-          ../python-pipeline/meta-gbp build
+          python-pipeline/meta-gbp materialize "${{ matrix.dist }}"
+          python-pipeline/meta-gbp build
 
       - name: Upload debs
         uses: actions/upload-artifact@v4
