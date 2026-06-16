@@ -54,6 +54,7 @@ def main() -> NoReturn:
         f'{gpg_setup}'
         f'apt-get update -qq && '
         f'cp -a /code /tmp/build-tree && '
+        f'git config --global --add safe.directory /tmp/build-tree && '
         f'cd /tmp/build-tree && '
         f'apt-get build-dep -y -o Debug::pkgProblemResolver=yes . && '
         f'git clean -fxfd && '
