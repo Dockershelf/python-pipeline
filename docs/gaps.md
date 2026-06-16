@@ -1,8 +1,23 @@
 # Python pipeline — remaining gaps
 
-Status as of 2026-06-15, after py3.14 full CI success (run `27523814722`) and live APT index verification.
+Status as of 2026-06-16 after gaps 1–6 implementation pass.
 
 Use this document for inline review comments. Each gap is numbered and grouped by priority.
+
+---
+
+## Resolved (gaps 1–6, Luis comments)
+
+| Gap | Resolution |
+|-----|------------|
+| **1** | Weekly **Tuesday** crons (`0–40 3 * * 2` UTC stagger) on all `py3.10`–`py3.14`; packaging re-dispatched for py3.11–3.13 after build fix |
+| **2** | `python/build-image.sh` rewritten to install from `apt.luisalejandro.org/dockershelf` (GPG key `0F6CBFE94AA83A5E`); PPA/mime-support removed |
+| **3** | Cron root cause: `mk-build-deps` on read-only `/code` mount — fixed in `build` via `/tmp/build-deps` |
+| **4** | Renamed to `ghcr.io/dockershelf/dockershelf-python-builder/*`; builder workflow pushed images (private; CI pulls via `docker login`) |
+| **5** | `import-incoming.sh`: fixed `$?` capture, proactive remove, import summary |
+| **6** | Added `scripts/seed-py-repo.sh`; `docs/operations.md` updated |
+
+**Follow-up:** Confirm py3.11–3.13 packaging runs complete and APT index updated. Set GHCR packages **public** in org settings if unauthenticated `docker pull` is required.
 
 ---
 
