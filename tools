@@ -9,7 +9,7 @@ from typing import NoReturn
 HERE = os.path.abspath(os.path.dirname(__file__))
 DOCKER_RUN = os.path.join(HERE, 'docker-run')
 
-TOOLS_IMAGE = os.environ.get('DOCKERSHELF_TOOLS_IMAGE', 'dockershelf-builder/tools')
+TOOLS_IMAGE = os.environ.get('DOCKERSHELF_TOOLS_IMAGE', 'dockershelf-python-builder/tools')
 
 
 def _user() -> list[str]:
