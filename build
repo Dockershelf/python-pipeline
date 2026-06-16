@@ -53,7 +53,8 @@ def main() -> NoReturn:
     prog = (
         f'{gpg_setup}'
         f'apt-get update -qq && '
-        f'cd /code/debian && mk-build-deps --install --remove --tool "apt-get --yes" ./control && '
+        f'mkdir -p /tmp/build-deps && cd /tmp/build-deps && '
+        f'mk-build-deps --install --remove --tool "apt-get --yes" /code/debian/control && '
         f'cp -r /code /tmp && '
         f'cd /tmp/code && '
         f'git clean -fxfd && '
