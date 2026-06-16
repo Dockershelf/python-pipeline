@@ -46,7 +46,7 @@ make generate-dockerfiles
 make build-builder-images
 ```
 
-Builder images are tagged `dockershelf-builder/<suite>` (e.g. `dockershelf-builder/trixie`).
+Builder images are tagged `dockershelf-python-builder/<suite>` (e.g. `dockershelf-python-builder/trixie`).
 
 ## Configuration
 
