@@ -19,8 +19,8 @@ DIST_DIR := $(PIPELINE)/dist
 ifneq (,$(wildcard $(PIPELINE)/config.env))
 include $(PIPELINE)/config.env
 endif
-export DOCKERSHELF_BUILDER_IMAGE ?= dockershelf-builder
-export DOCKERSHELF_TOOLS_IMAGE ?= dockershelf-builder/tools
+export DOCKERSHELF_BUILDER_IMAGE ?= dockershelf-python-builder
+export DOCKERSHELF_TOOLS_IMAGE ?= dockershelf-python-builder/tools
 ifdef DEBFULLNAME
 export DEBFULLNAME
 endif
@@ -46,9 +46,9 @@ all: help
 help:
 	@echo "Targets:"
 	@echo "  bootstrap                 Clone py3.* repos into workspace parent"
-	@echo "  build-tools-image         Build dockershelf-builder/tools (gbp, dch, …)"
+	@echo "  build-tools-image         Build dockershelf-python-builder/tools (gbp, dch, …)"
 	@echo "  generate-dockerfiles      Generate Dockerfile.{suite} from debian/control"
-	@echo "  build-builder-images      Build dockershelf-builder/* (Debian base)"
+	@echo "  build-builder-images      Build dockershelf-python-builder/* (Debian base)"
 	@echo "  materialize PY=3.13 DIST=trixie"
 	@echo "  build PY=3.13             Build binary .deb packages (unsigned)"
 	@echo "  publish DIST=trixie       Rsync dist/*.deb to DO droplet + reprepro import"
