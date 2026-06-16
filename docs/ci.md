@@ -7,12 +7,12 @@ Continuous integration for Dockershelf Python packaging: builder images on GHCR,
 
 | Workflow | Repo | Purpose |
 |----------|------|---------|
-| [`builder-images.yml`](../.github/workflows/builder-images.yml) | `python-pipeline` | Build and push `ghcr.io/dockershelf/dockershelf-builder/*` |
+| [`builder-images.yml`](../.github/workflows/builder-images.yml) | `python-pipeline` | Build and push `ghcr.io/dockershelf/dockershelf-python-builder/*` |
 | [`update-meta-gbp.yml`](../.github/workflows/update-meta-gbp.yml) | `python-pipeline` | Reusable: update → build → smoke → publish |
 | [`pr.yml`](../.github/workflows/pr.yml) | `python-pipeline` | `pre-commit` on pull requests |
 | [`publish.yml`](../.github/workflows/publish.yml) | `python-pipeline` | Manual republish of local `dist/` to APT |
 | [`deploy-connectivity.yml`](../.github/workflows/deploy-connectivity.yml) | `python-pipeline` | Manual SSH/incoming-dir check (no rsync) |
-| [`main.yml`](https://github.com/Dockershelf/py3.14/blob/main/.github/workflows/main.yml) | each `py3.XX` | Daily schedule + dispatch → calls reusable workflow |
+| [`main.yml`](https://github.com/Dockershelf/py3.14/blob/main/.github/workflows/main.yml) | each `py3.XX` | Weekly Tuesday schedule + dispatch → calls reusable workflow |
 
 ## CI workspace layout
 
@@ -34,9 +34,9 @@ Scripts:
 
 | Image | Tag |
 |-------|-----|
-| `ghcr.io/dockershelf/dockershelf-builder/tools` | `latest`, `sha-<commit>` |
-| `ghcr.io/dockershelf/dockershelf-builder/trixie` | `latest`, `sha-<commit>` |
-| `ghcr.io/dockershelf/dockershelf-builder/unstable` | `latest`, `sha-<commit>` |
+| `ghcr.io/dockershelf/dockershelf-python-builder/tools` | `latest`, `sha-<commit>` |
+| `ghcr.io/dockershelf/dockershelf-python-builder/trixie` | `latest`, `sha-<commit>` |
+| `ghcr.io/dockershelf/dockershelf-python-builder/unstable` | `latest`, `sha-<commit>` |
 
 `builder-images.yml` pushes on push to `main`; pull requests build only (no push).
 
@@ -52,11 +52,8 @@ Full droplet + GitHub wiring: [`docs/deploy-setup.md`](deploy-setup.md).
 
 | Name | Purpose |
 |------|---------|
-| `PY_REPO_PUSH_TOKEN` | PAT with `contents: write` and **`workflow`** scope — push `meta-gbp update` commits and workflow files |
 | `DEPLOY_SSH_KEY` | Private SSH key for `DEPLOY_USER@DEPLOY_HOST` |
 | `GH_PACKAGES_TOKEN` | Optional; defaults to `GITHUB_TOKEN` with `packages: write` on `python-pipeline` |
-
-The first push of `.github/workflows/` to `py3.*` requires a PAT with **`workflow`** scope (same limitation as the original fork).
 
 ### Repository variables
 
@@ -83,23 +80,21 @@ Publish jobs run only when `publish` input is true **and** `DEPLOY_HOST` is set.
    - Same secrets/variables as above (or inherit org-level).
 
 3. **GHCR package visibility**
-   - Link each `dockershelf-builder/*` package to `py3.10` … `py3.14` under **Package settings → Manage Actions access**, or make packages **public**.
+   - Link each `dockershelf-python-builder/*` package to `py3.10` … `py3.14` under **Package settings → Manage Actions access**, or make packages **public**.
    - Caller workflows use `permissions: packages: read`.
    - If `docker pull` is denied, CI builds from committed `dockerfiles/Dockerfile.*`.
 
-**Git push** of workflow files requires a PAT with **`workflow`** scope; use `gh auth token` after `gh auth login -s workflow`.
-
 ## Schedule (UTC)
 
-Cron is staggered per Python line to reduce runner overlap:
+Packaging runs **weekly on Tuesday** (2 days before Dockershelf consumer images build on **Thursday** 06:00 UTC). Cron is staggered per Python line to reduce runner overlap:
 
-| Repo | Cron |
-|------|------|
-| py3.10 | `45 9 * * *` |
-| py3.11 | `50 9 * * *` |
-| py3.12 | `55 9 * * *` |
-| py3.13 | `0 10 * * *` |
-| py3.14 | `5 10 * * *` |
+| Repo | Cron | Notes |
+|------|------|-------|
+| py3.10 | `0 3 * * 2` | Tuesday 03:00 |
+| py3.11 | `10 3 * * 2` | Tuesday 03:10 |
+| py3.12 | `20 3 * * 2` | Tuesday 03:20 |
+| py3.13 | `30 3 * * 2` | Tuesday 03:30 |
+| py3.14 | `40 3 * * 2` | Tuesday 03:40 |
 
 Scheduled runs publish when `DEPLOY_SSH_KEY` is configured. Use `workflow_dispatch` with `publish: false` to build and smoke-test only.
 
