@@ -17,6 +17,9 @@ INCOMING="${INCOMING:-${REPO_ROOT}/incoming}"
 GNUPGHOME="${GNUPGHOME:-${REPO_ROOT}/.gnupg}"
 export GNUPGHOME
 
+CLEAN_PKGS=()
+RETRIED_PKGS=()
+
 deb_matches_codename() {
     local deb="$1"
     # Dockershelf packages encode the suite in the version, e.g. 3.14.6-1+trixie2.
@@ -25,17 +28,26 @@ deb_matches_codename() {
 
 include_deb() {
     local deb="$1"
-    local pkg
+    local pkg version rc=0
     pkg="$(dpkg-deb -f "$deb" Package)"
+    version="$(dpkg-deb -f "$deb" Version)"
 
-    if reprepro -b "${REPO_ROOT}" includedeb "${CODENAME}" "${deb}"; then
-        return 0
+    if reprepro -b "${REPO_ROOT}" list "${CODENAME}" "${pkg}" 2>/dev/null \
+        | grep -qF "${version}"; then
+        echo "Removing existing ${pkg}=${version} from ${CODENAME} before import..." >&2
+        reprepro -b "${REPO_ROOT}" remove "${CODENAME}" "${pkg}" || true
     fi
 
-    local rc=$?
+    if reprepro -b "${REPO_ROOT}" includedeb "${CODENAME}" "${deb}"; then
+        CLEAN_PKGS+=("${pkg}")
+        return 0
+    fi
+    rc=$?
+
     echo "reprepro includedeb failed for ${pkg} (exit ${rc}); removing and retrying once..." >&2
     reprepro -b "${REPO_ROOT}" remove "${CODENAME}" "${pkg}" || true
     reprepro -b "${REPO_ROOT}" includedeb "${CODENAME}" "${deb}"
+    RETRIED_PKGS+=("${pkg}")
 }
 
 shopt -s nullglob
@@ -60,6 +72,14 @@ done
 if [ "$matched" -eq 0 ]; then
     echo "No .deb files for ${CODENAME} in ${INCOMING}" >&2
     exit 1
+fi
+
+echo "Import summary for ${CODENAME}:"
+if [ "${#CLEAN_PKGS[@]}" -gt 0 ]; then
+    echo "  clean: ${CLEAN_PKGS[*]}"
+fi
+if [ "${#RETRIED_PKGS[@]}" -gt 0 ]; then
+    echo "  retried: ${RETRIED_PKGS[*]}"
 fi
 
 echo "Done. Repository updated under ${REPO_ROOT}/dists/${CODENAME}/"
