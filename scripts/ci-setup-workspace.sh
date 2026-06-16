@@ -37,8 +37,8 @@ fi
 
 export PY_REPO_DIR
 export PIPELINE_DIR
-export DOCKERSHELF_BUILDER_IMAGE="${DOCKERSHELF_BUILDER_IMAGE:-ghcr.io/dockershelf/dockershelf-builder}"
-export DOCKERSHELF_TOOLS_IMAGE="${DOCKERSHELF_TOOLS_IMAGE:-ghcr.io/dockershelf/dockershelf-builder/tools}"
+export DOCKERSHELF_BUILDER_IMAGE="${DOCKERSHELF_BUILDER_IMAGE:-ghcr.io/dockershelf/dockershelf-python-builder}"
+export DOCKERSHELF_TOOLS_IMAGE="${DOCKERSHELF_TOOLS_IMAGE:-ghcr.io/dockershelf/dockershelf-python-builder/tools}"
 
 if [[ -n "${GITHUB_ENV:-}" ]]; then
     {
