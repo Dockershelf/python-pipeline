@@ -66,7 +66,6 @@ Optional:
 
 | Secret | When |
 |--------|------|
-| `PY_REPO_PUSH_TOKEN` | PAT with `workflow` scope if `GITHUB_TOKEN` cannot push workflow files |
 | `GH_PACKAGES_TOKEN` | Only if GHCR pull needs a separate token |
 
 ## 4. GitHub variables
