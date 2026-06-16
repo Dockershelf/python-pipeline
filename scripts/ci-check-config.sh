@@ -97,7 +97,7 @@ Optional:
   PY_REPO_PUSH_TOKEN — only if GITHUB_TOKEN cannot push (forks / tight org policy)
   DEBFULLNAME, DEBEMAIL — override default maintainer identity
 
-GHCR: link dockershelf-builder/* packages to py3.* repos or make public.
+GHCR: link dockershelf-python-builder/* packages to py3.* repos or make public.
 EOF
 
 echo "Recommended variable values for this deployment:"
