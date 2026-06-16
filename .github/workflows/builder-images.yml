@@ -27,7 +27,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/dockershelf/dockershelf-builder
+  IMAGE_PREFIX: ghcr.io/dockershelf/dockershelf-python-builder
 
 jobs:
   build-and-push:
