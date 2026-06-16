@@ -9,8 +9,8 @@ set -euo pipefail
 PIPELINE_DIR="${PIPELINE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 WORKSPACE="${WORKSPACE:-$(dirname "$PIPELINE_DIR")}"
 
-export DOCKERSHELF_BUILDER_IMAGE="${DOCKERSHELF_BUILDER_IMAGE:-ghcr.io/dockershelf/dockershelf-builder}"
-export DOCKERSHELF_TOOLS_IMAGE="${DOCKERSHELF_TOOLS_IMAGE:-ghcr.io/dockershelf/dockershelf-builder/tools}"
+export DOCKERSHELF_BUILDER_IMAGE="${DOCKERSHELF_BUILDER_IMAGE:-ghcr.io/dockershelf/dockershelf-python-builder}"
+export DOCKERSHELF_TOOLS_IMAGE="${DOCKERSHELF_TOOLS_IMAGE:-ghcr.io/dockershelf/dockershelf-python-builder/tools}"
 SUITES="${DOCKERSHELF_SUITES:-trixie unstable}"
 
 pull_or_build() {
