@@ -53,16 +53,17 @@ Use this when Dockershelf should ship a **new `py3.XX` repo** (first time packag
 ### 1.1 Create the packaging repository
 
 1. Create `Dockershelf/py3.15` on GitHub (empty repo).
-2. Seed from the closest existing line, usually the previous minor:
+2. Seed from the closest existing line:
 
    ```bash
-   cd ..   # deadsnakes-pipeline workspace root
-   git clone https://github.com/Dockershelf/py3.14.git py3.15
-   cd py3.15
-   git remote set-url origin https://github.com/Dockershelf/py3.15.git
+   cd python-pipeline
+   ./scripts/seed-py-repo.sh 3.15 ../py3.15 --from 3.14
+   cd ../py3.15
+   git remote add origin https://github.com/Dockershelf/py3.15.git
+   git push -u origin main
    ```
 
-3. Reset history (recommended for a clean fork) or keep history — either works if content is correct.
+   Or clone manually if you prefer to keep full history from an existing line.
 
 ### 1.2 Repoint cpython and retarget packaging metadata
 
@@ -231,7 +232,7 @@ make generate-dockerfiles
 make build-builder-images
 ```
 
-This produces `dockershelf-builder/forky` and `dockerfiles/Dockerfile.forky`.
+This produces `dockershelf-python-builder/forky` and `dockerfiles/Dockerfile.forky`.
 
 ### 3.3 APT repository (droplet)
 
