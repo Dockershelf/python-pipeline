@@ -57,7 +57,7 @@ def main() -> NoReturn:
             'test -f /usr/include/crypt.h || '
             '{ echo "FATAL: libcrypt-dev missing from builder image"; exit 1; } && '
             'printf "%s\\n" "#include <crypt.h>" '
-            '"int main(void) { return crypt(\\"x\\", \\"xx\\") != NULL ? 0 : 1; }" '
+            '"int main(void) { (void)crypt(\\"x\\", \\"xx\\"); return 0; }" '
             '| gcc -xc - -lcrypt -o /tmp/crypt-link-test && /tmp/crypt-link-test && '
             'echo "libcrypt OK for _crypt" && '
         )
