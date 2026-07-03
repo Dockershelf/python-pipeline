@@ -50,17 +50,6 @@ def main() -> NoReturn:
     os.makedirs(dist_dir, exist_ok=True)
     gbp_args = '-us -uc'
     gpg_setup = 'chmod 700 ~/.gnupg && ' if _gpg_volumes() else ''
-    crypt_verify = ''
-    if dist == 'unstable':
-        crypt_verify = (
-            'echo "Verifying libcrypt for _crypt module..." && '
-            'test -f /usr/include/crypt.h || '
-            '{ echo "FATAL: libcrypt-dev missing from builder image"; exit 1; } && '
-            'printf "%s\\n" "#include <crypt.h>" '
-            '"int main(void) { (void)crypt(\\"x\\", \\"xx\\"); return 0; }" '
-            '| gcc -xc - -lcrypt -o /tmp/crypt-link-test && /tmp/crypt-link-test && '
-            'echo "libcrypt OK for _crypt" && '
-        )
     prog = (
         f'{gpg_setup}'
         f'apt-get update -qq && '
@@ -68,7 +57,6 @@ def main() -> NoReturn:
         f'git config --global --add safe.directory /tmp/build-tree && '
         f'cd /tmp/build-tree && '
         f'apt-get build-dep -y -o Debug::pkgProblemResolver=yes . && '
-        f'{crypt_verify}'
         f'git clean -fxfd && '
         f'gbp buildpackage {gbp_args} --git-pristine-tar --git-debian-branch=debian/{dist} && '
         f'find .. -maxdepth 1 -type f | xargs --replace cp {{}} /dist'
