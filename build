@@ -50,6 +50,16 @@ def main() -> NoReturn:
     os.makedirs(dist_dir, exist_ok=True)
     gbp_args = '-us -uc'
     gpg_setup = 'chmod 700 ~/.gnupg && ' if _gpg_volumes() else ''
+    crypt_verify = ''
+    if dist == 'unstable':
+        crypt_verify = (
+            'echo "Verifying _crypt extension builds on unstable..." && '
+            'cd /tmp/build-tree && '
+            'if [ ! -f Makefile ]; then debian/rules configure; fi && '
+            'make -j"$(nproc)" Modules/_crypt.cpython-*-linux-gnu.so && '
+            'test -n "$(ls Modules/_crypt.cpython-*-linux-gnu.so 2>/dev/null)" && '
+            'echo "_crypt verification OK" && '
+        )
     prog = (
         f'{gpg_setup}'
         f'apt-get update -qq && '
@@ -57,6 +67,7 @@ def main() -> NoReturn:
         f'git config --global --add safe.directory /tmp/build-tree && '
         f'cd /tmp/build-tree && '
         f'apt-get build-dep -y -o Debug::pkgProblemResolver=yes . && '
+        f'{crypt_verify}'
         f'git clean -fxfd && '
         f'gbp buildpackage {gbp_args} --git-pristine-tar --git-debian-branch=debian/{dist} && '
         f'find .. -maxdepth 1 -type f | xargs --replace cp {{}} /dist'

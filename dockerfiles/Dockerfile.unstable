@@ -16,6 +16,7 @@ RUN : \
         gnupg \
         libbluetooth-dev \
         libbz2-dev \
+        libcrypt-dev \
         libdb-dev \
         libexpat1-dev \
         libffi-dev \
@@ -28,6 +29,7 @@ RUN : \
         libssl-dev \
         locales \
         lsb-release \
+        media-types \
         net-tools \
         netbase \
         pristine-tar \

@@ -45,6 +45,11 @@ SKIP_DEPS_BY_CODENAME: dict[str, set[str]] = {
     'unstable': {'mime-support'},
 }
 
+# Extra build deps not always pulled from control (e.g. _crypt on sid needs libcrypt).
+EXTRA_DEPS_BY_CODENAME: dict[str, set[str]] = {
+    'unstable': {'libcrypt-dev'},
+}
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -76,6 +81,7 @@ def main() -> int:
     depends = depends[len(DEPENDS):]
 
     deps = set(TO_APT_RE.sub('', depends).split()) | ALWAYS_DEPS
+    deps |= EXTRA_DEPS_BY_CODENAME.get(args.codename, set())
     deps = {ARCH_QUAL_RE.sub('', d) for d in deps}
     deps -= SKIP_DEPS_BY_CODENAME.get(args.codename, set())
 
