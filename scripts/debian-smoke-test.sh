@@ -55,9 +55,13 @@ docker cp "$DIST_DIR/." "$CONTAINER:/debs/"
 docker exec "$CONTAINER" bash -euxc "
     apt-get update -qq
     shopt -s nullglob
-    pkgs=(/debs/*.deb)
-    dpkg -i \"\${pkgs[@]}\" || true
-    DEBIAN_FRONTEND=noninteractive apt-get -f install -y -qq
+    main=(/debs/python${PY}_*.deb)
+    if (( \${#main[@]} != 1 )); then
+        echo \"expected exactly one python${PY} interpreter .deb, found \${#main[@]}\" >&2
+        ls -la /debs/
+        exit 1
+    fi
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \"\${main[0]}\"
     python${PY} --version
     python${PY} -c 'import ssl, ctypes, sqlite3'
 "
