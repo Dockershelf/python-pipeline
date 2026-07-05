@@ -3,12 +3,13 @@
 #
 # Usage:
 #   DEPLOY_HOST=... DEPLOY_USER=... DEPLOY_DIR=... DEPLOY_INCOMING=... \
-#     ./scripts/ci-publish.sh trixie /path/to/dist
+#     ./scripts/ci-publish.sh trixie /path/to/dist amd64
 
 set -euo pipefail
 
-CODENAME="${1:?usage: ci-publish.sh <trixie|unstable> <dist-dir>}"
-DIST_DIR="${2:?usage: ci-publish.sh <trixie|unstable> <dist-dir>}"
+CODENAME="${1:?usage: ci-publish.sh <trixie|unstable> <dist-dir> [arch]}"
+DIST_DIR="${2:?usage: ci-publish.sh <trixie|unstable> <dist-dir> [arch]}"
+ARCH="${3:-amd64}"
 
 HOST="${DEPLOY_HOST:?DEPLOY_HOST required}"
 USER="${DEPLOY_USER:?DEPLOY_USER required}"
@@ -19,30 +20,22 @@ DIST_DIR="$(cd "$DIST_DIR" && pwd)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IMPORT_SCRIPT="$SCRIPT_DIR/../debian-repo-setup/import-incoming.sh"
 
-deb_matches_codename() {
-    local deb="$1"
-    [[ "$(basename "$deb")" == *"+${CODENAME}"* ]]
-}
+# Per-arch incoming subdir (avoids clobbering between concurrent arch publishes)
+REMOTE_INCOMING="${INCOMING}/${ARCH}"
 
 shopt -s nullglob
-debs=()
-for deb in "$DIST_DIR"/*.deb; do
-    if deb_matches_codename "$deb"; then
-        debs+=("$deb")
-    fi
-done
-
+debs=("$DIST_DIR"/*.deb)
 if [[ ${#debs[@]} -eq 0 ]]; then
-    echo "no .deb files for ${CODENAME} in $DIST_DIR" >&2
+    echo "no .deb files in $DIST_DIR" >&2
     exit 1
 fi
 
-echo "Publishing ${#debs[@]} package(s) for ${CODENAME} to ${USER}@${HOST}:${INCOMING}/"
-ssh "${USER}@${HOST}" "rm -f ${INCOMING}/*.deb"
-rsync -av "${debs[@]}" "${USER}@${HOST}:${INCOMING}/"
+echo "Publishing ${#debs[@]} package(s) for ${CODENAME}/${ARCH} to ${USER}@${HOST}:${REMOTE_INCOMING}/"
+ssh "${USER}@${HOST}" "mkdir -p ${REMOTE_INCOMING}"
+rsync -av "${debs[@]}" "${USER}@${HOST}:${REMOTE_INCOMING}/"
 
 ssh "${USER}@${HOST}" \
-    "REPO_ROOT=${REPO_ROOT} INCOMING=${INCOMING} bash -s ${CODENAME}" \
+    "REPO_ROOT=${REPO_ROOT} INCOMING=${INCOMING} bash -s ${CODENAME} ${ARCH}" \
     <"$IMPORT_SCRIPT"
 
-echo "Published to ${CODENAME}"
+echo "Published to ${CODENAME}/${ARCH}"
