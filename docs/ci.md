@@ -63,8 +63,8 @@ Full droplet + GitHub wiring: [`docs/deploy-setup.md`](deploy-setup.md).
 | `DEPLOY_USER` | `deploy` |
 | `DEPLOY_DIR` | `/var/www/debian` |
 | `DEPLOY_INCOMING` | `/var/www/debian/incoming` |
-| `DEBFULLNAME` | `Dockershelf Maintainer` |
-| `DEBEMAIL` | `maintainer@example.com` |
+| `DEBFULLNAME` | `Luis Alejandro Martínez Faneyth` |
+| `DEBEMAIL` | `luis@luisalejandro.org` |
 
 Publish jobs run only when `publish` input is true **and** `DEPLOY_HOST` is set. When deploy variables are missing, build and smoke still run and the workflow summary notes that publish was skipped.
 
@@ -90,13 +90,13 @@ Packaging runs **weekly on Tuesday** (2 days before Dockershelf consumer images 
 
 | Repo | Cron | Notes |
 |------|------|-------|
-| py3.10 | `0 3 * * 2` | Tuesday 03:00 |
-| py3.11 | `10 3 * * 2` | Tuesday 03:10 |
-| py3.12 | `20 3 * * 2` | Tuesday 03:20 |
-| py3.13 | `30 3 * * 2` | Tuesday 03:30 |
-| py3.14 | `40 3 * * 2` | Tuesday 03:40 |
+| py3.10 | `0 0 * * 2` | Tuesday 00:00 |
+| py3.11 | `0 2 * * 2` | Tuesday 02:00 |
+| py3.12 | `0 4 * * 2` | Tuesday 04:00 |
+| py3.13 | `0 6 * * 2` | Tuesday 06:00 |
+| py3.14 | `0 8 * * 2` | Tuesday 08:00 |
 
-Scheduled runs publish when `DEPLOY_SSH_KEY` is configured. Use `workflow_dispatch` with `publish: false` to build and smoke-test only.
+Scheduled runs publish when `DEPLOY_SSH_KEY` is configured. Use `workflow_dispatch` with `publish: false` to build and smoke-test only, and `arches` (JSON array, default `["amd64"]`) to select architectures. Multi-arch (amd64 + arm64) is supported: arm64 jobs run on `ubuntu-24.04-arm` runners, and `builder-images.yml` publishes `linux/amd64,linux/arm64` images via QEMU.
 
 ## Manual runs
 
