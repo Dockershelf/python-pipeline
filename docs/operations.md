@@ -2,7 +2,7 @@
 
 How to add a new Python release line, bump an existing Python version, or add a new Debian suite to the Dockershelf packaging pipeline.
 
-**Workspace:** run commands from `python-pipeline/` unless noted. Each `py3.XX/` repo is a sibling in the parent directory (`deadsnakes-pipeline/`).
+**Workspace:** run commands from `python-pipeline/` unless noted. Each `py3.XX/` repo is a sibling in the parent directory (`dockershelf-pipeline/`).
 
 **Version string format:** Debian package versions look like `3.14.5-1+trixie3`:
 

@@ -9,7 +9,7 @@ Fork of [deadsnakes/runbooks](https://github.com/deadsnakes/runbooks), adapted f
 Clone this repo as a sibling of the `py3.*` packaging repos:
 
 ```text
-deadsnakes-pipeline/
+dockershelf-pipeline/
 ├── python-pipeline/     # this repo
 ├── py3.10/
 ├── py3.11/

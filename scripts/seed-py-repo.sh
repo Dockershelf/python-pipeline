@@ -2,7 +2,7 @@
 # Seed a local py3.XX packaging repository from an existing Dockershelf py line.
 #
 # Usage:
-#   ./seed-py-repo.sh 3.15 /path/to/deadsnakes-pipeline/py3.15
+#   ./seed-py-repo.sh 3.15 /path/to/dockershelf-pipeline/py3.15
 #   ./seed-py-repo.sh 3.15 /path/to/py3.15 --from 3.14
 #
 # The cpython submodule is not cloned here (large). Initialize later with:

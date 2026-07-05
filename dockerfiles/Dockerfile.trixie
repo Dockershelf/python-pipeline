@@ -1,4 +1,4 @@
-# Created with `/Users/luisalejandro/Development/dockershelf/deadsnakes-pipeline/python-pipeline/make-new-image --codename trixie /Users/luisalejandro/Development/dockershelf/deadsnakes-pipeline/py3.13/debiandirs/trixie/control` DO NOT EDIT
+# Created with `/Users/luisalejandro/Development/dockershelf/dockershelf-pipeline/python-pipeline/make-new-image --codename trixie /Users/luisalejandro/Development/dockershelf/dockershelf-pipeline/py3.13/debiandirs/trixie/control` DO NOT EDIT
 FROM debian:trixie-slim
 RUN : \
     && apt-get update -qq \
