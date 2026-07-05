@@ -21,8 +21,8 @@ jobs:
   update:
     runs-on: ubuntu-latest
     env:
-      DEBFULLNAME: ${{ vars.DEBFULLNAME || 'Dockershelf Maintainer' }}
-      DEBEMAIL: ${{ vars.DEBEMAIL || '41898282+github-actions[bot]@users.noreply.github.com' }}
+      DEBFULLNAME: ${{ vars.DEBFULLNAME || 'Luis Alejandro Martínez Faneyth' }}
+      DEBEMAIL: ${{ vars.DEBEMAIL || 'luis@luisalejandro.org' }}
     outputs:
       rev: ${{ steps.rev.outputs.rev }}
       py: ${{ steps.rev.outputs.py }}
@@ -90,8 +90,8 @@ jobs:
     needs: update
     runs-on: ubuntu-latest
     env:
-      DEBFULLNAME: ${{ vars.DEBFULLNAME || 'Dockershelf Maintainer' }}
-      DEBEMAIL: ${{ vars.DEBEMAIL || '41898282+github-actions[bot]@users.noreply.github.com' }}
+      DEBFULLNAME: ${{ vars.DEBFULLNAME || 'Luis Alejandro Martínez Faneyth' }}
+      DEBEMAIL: ${{ vars.DEBEMAIL || 'luis@luisalejandro.org' }}
     timeout-minutes: 360
     strategy:
       fail-fast: false
@@ -211,7 +211,7 @@ jobs:
         run: bash python-pipeline/scripts/ci-deploy-preflight.sh
 
       - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
 
@@ -224,19 +224,4 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
-          bash python-pipeline/scripts/ci-publish.sh "${{ matrix.dist }}" dist
-
-  deploy-status:
-    needs: [smoke, publish]
-    if: always() && needs.smoke.result == 'success' && inputs.publish && needs.publish.result == 'skipped'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Publish skipped summary
-        run: |
-          {
-            echo "## Publish skipped"
-            echo ""
-            echo "Build and smoke completed. Publish was not run because deploy variables are not configured (\`DEPLOY_HOST\` empty)."
-            echo ""
-            echo "See [deploy-setup.md](https://github.com/Dockershelf/python-pipeline/blob/main/docs/deploy-setup.md)."
-          } >> "$GITHUB_STEP_SUMMARY"
+          bash python-pipeline/scripts/ci-publish.sh "${{ matrix.dist }}" dist "${{ matrix.arch }}"

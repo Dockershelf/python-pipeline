@@ -39,7 +39,7 @@ export DOCKERSHELF_GITHUB_ORG ?= Dockershelf
 PY_VERSIONS := 3.10 3.11 3.12 3.13 3.14
 
 .PHONY: all bootstrap clone-py-repos build-tools-image generate-dockerfiles build-builder-images \
-	materialize build publish list-dists help
+	materialize build publish smoke list-dists help
 
 all: help
 
@@ -52,6 +52,7 @@ help:
 	@echo "  materialize PY=3.13 DIST=trixie"
 	@echo "  build PY=3.13             Build binary .deb packages (unsigned)"
 	@echo "  publish DIST=trixie       Rsync dist/*.deb to DO droplet + reprepro import"
+	@echo "  smoke PY=3.13 DIST=trixie  Install debs in a container and run import tests"
 	@echo "  list-dists                Show Debian suites per py repo"
 	@echo ""
 	@echo "Config: copy config.env.example to config.env"
@@ -127,6 +128,12 @@ build: bootstrap build-tools-image
 	@mkdir -p "$(DIST_DIR)"
 	@cd "$(WORKSPACE)/py$(PY)" && ../python-pipeline/meta-gbp build
 	@echo "Packages written to $(DIST_DIR)/"
+
+smoke:
+	@test -n "$(PY)" || (echo "PY required, e.g. make smoke PY=3.14 DIST=unstable" && exit 1)
+	@test -n "$(DIST)" || (echo "DIST required, e.g. DIST=unstable" && exit 1)
+	@bash "$(PIPELINE)/scripts/debian-smoke-test.sh" \
+		--dist "$(DIST)" --py "$(PY)" --dist-dir "$(DIST_DIR)"
 
 publish:
 	@test -n "$(DIST)" || (echo "DIST required, e.g. make publish DIST=trixie" && exit 1)

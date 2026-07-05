@@ -6,7 +6,9 @@
 #   ./seed-py-repo.sh 3.15 /path/to/py3.15 --from 3.14
 #
 # The cpython submodule is not cloned here (large). Initialize later with:
-#   git submodule update --init cpython
+#   ../init-cpython-submodules.sh py3.15
+# Or for all py3.* repos:
+#   ../init-cpython-submodules.sh
 
 set -euo pipefail
 
