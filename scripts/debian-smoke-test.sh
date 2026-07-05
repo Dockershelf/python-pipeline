@@ -2,13 +2,14 @@
 # Install built .deb packages in a Debian suite container and run import smoke tests.
 #
 # Usage:
-#   ./scripts/debian-smoke-test.sh --dist trixie --py 3.14 --dist-dir ../python-pipeline/dist
+#   ./scripts/debian-smoke-test.sh --dist trixie --py 3.14 --dist-dir ../python-pipeline/dist --arch amd64
 
 set -euo pipefail
 
 DIST=""
 PY=""
 DIST_DIR=""
+ARCH="${DOCKERSHELF_ARCH:-amd64}"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -24,6 +25,10 @@ while [[ $# -gt 0 ]]; do
             DIST_DIR="$2"
             shift 2
             ;;
+        --arch)
+            ARCH="$2"
+            shift 2
+            ;;
         *)
             echo "unknown argument: $1" >&2
             exit 1
@@ -32,7 +37,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$DIST" || -z "$PY" || -z "$DIST_DIR" ]]; then
-    echo "usage: $0 --dist trixie --py 3.14 --dist-dir path/to/debs" >&2
+    echo "usage: $0 --dist trixie --py 3.14 --dist-dir path/to/debs [--arch amd64]" >&2
     exit 1
 fi
 
@@ -45,10 +50,10 @@ if [[ ${#debs[@]} -eq 0 ]]; then
 fi
 
 IMAGE="debian:${DIST}-slim"
-CONTAINER="dockershelf-smoke-$$"
+CONTAINER="dockershelf-py-smoke-$$"
 trap 'docker rm -f "$CONTAINER" >/dev/null 2>&1 || true' EXIT
 
-docker run -d --name "$CONTAINER" "$IMAGE" sleep 3600
+docker run -d --name "$CONTAINER" --platform "linux/${ARCH}" "$IMAGE" sleep 3600
 docker exec "$CONTAINER" mkdir -p /debs
 docker cp "$DIST_DIR/." "$CONTAINER:/debs/"
 
@@ -68,4 +73,4 @@ docker exec "$CONTAINER" bash -euxc "
     python${PY} -c 'import ssl, ctypes, sqlite3'
 "
 
-echo "smoke test passed for python${PY} on ${DIST}"
+echo "smoke test passed for python${PY} on ${DIST}/${ARCH}"

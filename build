@@ -12,6 +12,7 @@ TOOLS = os.path.join(HERE, 'tools')
 DOCKER_RUN = os.path.join(HERE, 'docker-run')
 
 BUILDER_IMAGE = os.environ.get('DOCKERSHELF_BUILDER_IMAGE', 'dockershelf-python-builder')
+ARCH = os.environ.get('DOCKERSHELF_ARCH', 'amd64')
 
 
 def _gpg_volumes() -> list[str]:
@@ -45,7 +46,7 @@ def main() -> NoReturn:
     dist_dir = os.path.abspath(os.path.join(pwd, '../python-pipeline/dist'))
 
     print('*' * 79)
-    print(f'Running build (results will be in {dist_dir})')
+    print(f'Running build for {ARCH} (results will be in {dist_dir})')
     print('*' * 79)
     os.makedirs(dist_dir, exist_ok=True)
     gbp_args = '-us -uc'
@@ -59,10 +60,11 @@ def main() -> NoReturn:
         f'apt-get build-dep -y -o Debug::pkgProblemResolver=yes . && '
         f'git clean -fxfd && '
         f'gbp buildpackage {gbp_args} --git-pristine-tar --git-debian-branch=debian/{dist} && '
-        f'find .. -maxdepth 1 -type f | xargs --replace cp {{}} /dist'
+        f'find .. -maxdepth 1 -type f -name "*.deb" | xargs --replace cp {{}} /dist'
     )
     cmd = (
         DOCKER_RUN,
+        '--platform', f'linux/{ARCH}',
         *_gpg_volumes(),
         '-v', f'{pwd}:/code:ro',
         '-v', f'{dist_dir}:/dist:rw',
