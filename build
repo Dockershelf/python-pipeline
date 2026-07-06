@@ -11,7 +11,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 TOOLS = os.path.join(HERE, 'tools')
 DOCKER_RUN = os.path.join(HERE, 'docker-run')
 
-BUILDER_IMAGE = os.environ.get('DOCKERSHELF_BUILDER_IMAGE', 'dockershelf-python-builder')
+BUILDER_IMAGE = os.environ.get('DOCKERSHELF_BUILDER_IMAGE', 'ghcr.io/dockershelf/dockershelf-python-builder')
 ARCH = os.environ.get('DOCKERSHELF_ARCH', 'amd64')
 
 
