@@ -20,9 +20,20 @@ GNUPGHOME="${GNUPGHOME:-${REPO_ROOT}/.gnupg}"
 PUBLISH_LOCK="${PUBLISH_LOCK:-${REPO_ROOT}/.publish.lock}"
 export GNUPGHOME
 
+# The script holds PUBLISH_LOCK on fd 9 for the entire import loop (see below),
+# so reprepro calls are already serialized. This wrapper is intentionally a
+# plain reprepro invocation — re-locking the same file from the same process
+# deadlocks on Linux (flock locks are per open-file-description, not per pid).
 reprepro_locked() {
-    flock -w 600 "$PUBLISH_LOCK" reprepro "$@"
+    reprepro "$@"
 }
+
+# Validate PUBLISH_ID: it is used in a path, so reject anything outside
+# [A-Za-z0-9._-] to prevent path traversal/escape.
+if [[ -n "${PUBLISH_ID}" ]] && [[ ! "${PUBLISH_ID}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+    echo "invalid PUBLISH_ID: ${PUBLISH_ID}" >&2
+    exit 1
+fi
 
 # Scope to per-arch subdir if ARCH is given (multi-arch publish isolation).
 # If PUBLISH_ID is also given, scope further to a unique per-publish subdir so
@@ -33,6 +44,12 @@ if [[ -n "$ARCH" ]]; then
 fi
 if [[ -n "$PUBLISH_ID" ]]; then
     INCOMING="${INCOMING}/${PUBLISH_ID}"
+fi
+
+# Clean up the per-publish subdir on exit so failed imports don't leave
+# stale .deb files accumulating on the droplet.
+if [[ -n "${PUBLISH_ID}" ]]; then
+    trap 'rm -rf "${INCOMING}" 2>/dev/null || true' EXIT
 fi
 
 CLEAN_PKGS=()
@@ -128,10 +145,5 @@ fi
 
 # Regenerate indices (picks up new arches automatically)
 reprepro -b "${REPO_ROOT}" export
-
-# Clean up the per-publish subdir (now empty after rm -f above)
-if [[ -n "${PUBLISH_ID}" ]]; then
-    rmdir "${INCOMING}" 2>/dev/null || true
-fi
 
 echo "Done. Repository updated under ${REPO_ROOT}/dists/${CODENAME}/"

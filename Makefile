@@ -137,16 +137,5 @@ smoke:
 
 publish:
 	@test -n "$(DIST)" || (echo "DIST required, e.g. make publish DIST=trixie" && exit 1)
-	@shopt -s nullglob; debs=("$(DIST_DIR)"/*.deb); \
-	if [ "$${#debs[@]}" -eq 0 ]; then \
-		echo "No .deb files in $(DIST_DIR)/ — run make build first"; \
-		exit 1; \
-	fi; \
-	echo "Publishing $${#debs[@]} package(s) to $(DOCKERSHELF_DEPLOY_USER)@$(DOCKERSHELF_DEPLOY_HOST):$(DOCKERSHELF_DEPLOY_INCOMING)/"; \
-	rsync -av --progress "$${debs[@]}" \
-		"$(DOCKERSHELF_DEPLOY_USER)@$(DOCKERSHELF_DEPLOY_HOST):$(DOCKERSHELF_DEPLOY_INCOMING)/"; \
-	ssh "$(DOCKERSHELF_DEPLOY_USER)@$(DOCKERSHELF_DEPLOY_HOST)" \
-		"REPO_ROOT=$(DOCKERSHELF_DEPLOY_DIR) INCOMING=$(DOCKERSHELF_DEPLOY_INCOMING) \
-		/usr/local/bin/dockershelf-import-incoming $(DIST) || \
-		bash -s $(DIST)" < "$(PIPELINE)/debian-repo-setup/import-incoming.sh"; \
-	echo "Published to $(DOCKERSHELF_APT_URL) ($(DIST))"
+	@bash "$(PIPELINE)/scripts/ci-publish.sh" "$(DIST)" "$(DIST_DIR)" "$(DOCKERSHELF_ARCH)"
+	@echo "Published to $(DOCKERSHELF_APT_URL) ($(DIST))"
