@@ -11,8 +11,9 @@
 
 set -euo pipefail
 
-CODENAME="${1:?usage: import-incoming.sh <trixie|unstable> [arch]}"
+CODENAME="${1:?usage: import-incoming.sh <trixie|unstable> [arch] [publish-id]}"
 ARCH="${2:-}"
+PUBLISH_ID="${3:-}"
 REPO_ROOT="${REPO_ROOT:-/var/www/debian}"
 INCOMING="${INCOMING:-${REPO_ROOT}/incoming}"
 GNUPGHOME="${GNUPGHOME:-${REPO_ROOT}/.gnupg}"
@@ -23,9 +24,15 @@ reprepro_locked() {
     flock -w 600 "$PUBLISH_LOCK" reprepro "$@"
 }
 
-# Scope to per-arch subdir if ARCH is given (multi-arch publish isolation)
+# Scope to per-arch subdir if ARCH is given (multi-arch publish isolation).
+# If PUBLISH_ID is also given, scope further to a unique per-publish subdir so
+# concurrent publishes (from different repos/pipelines sharing the droplet)
+# only process the files they rsync'd and cannot delete each other's files.
 if [[ -n "$ARCH" ]]; then
     INCOMING="${INCOMING}/${ARCH}"
+fi
+if [[ -n "$PUBLISH_ID" ]]; then
+    INCOMING="${INCOMING}/${PUBLISH_ID}"
 fi
 
 CLEAN_PKGS=()
@@ -83,6 +90,13 @@ if [ "${#debs[@]}" -eq 0 ]; then
     exit 0
 fi
 
+# Hold the publish lock for the entire import so concurrent publishes from
+# different repos/pipelines (which share the same reprepro repo and lock file)
+# serialize at the droplet. The per-command reprepro_locked() is not sufficient
+# because the read-remove-include-rm sequence must be atomic.
+exec 9>"$PUBLISH_LOCK"
+flock -w 600 9
+
 matched=0
 for deb in "${debs[@]}"; do
     if ! deb_matches_codename "$deb"; then
@@ -113,6 +127,11 @@ if [ "${#RETRIED_PKGS[@]}" -gt 0 ]; then
 fi
 
 # Regenerate indices (picks up new arches automatically)
-reprepro_locked -b "${REPO_ROOT}" export
+reprepro -b "${REPO_ROOT}" export
+
+# Clean up the per-publish subdir (now empty after rm -f above)
+if [[ -n "${PUBLISH_ID}" ]]; then
+    rmdir "${INCOMING}" 2>/dev/null || true
+fi
 
 echo "Done. Repository updated under ${REPO_ROOT}/dists/${CODENAME}/"

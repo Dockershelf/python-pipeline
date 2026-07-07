@@ -20,8 +20,13 @@ DIST_DIR="$(cd "$DIST_DIR" && pwd)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IMPORT_SCRIPT="$SCRIPT_DIR/../debian-repo-setup/import-incoming.sh"
 
-# Per-arch incoming subdir (avoids clobbering between concurrent arch publishes)
-REMOTE_INCOMING="${INCOMING}/${ARCH}"
+# Per-arch incoming subdir (avoids clobbering between concurrent arch publishes).
+# Use a unique per-publish subdir so concurrent publishes (from different repos
+# or pipelines sharing the same droplet) cannot see or delete each other's
+# files — import-incoming.sh only processes the subdir it is given.
+REMOTE_INCOMING_BASE="${INCOMING}/${ARCH}"
+PUBLISH_ID="$(date -u +%Y%m%dT%H%M%S)-$$-${RANDOM}"
+REMOTE_INCOMING="${REMOTE_INCOMING_BASE}/${PUBLISH_ID}"
 
 shopt -s nullglob
 debs=("$DIST_DIR"/*.deb)
@@ -32,10 +37,10 @@ fi
 
 echo "Publishing ${#debs[@]} package(s) for ${CODENAME}/${ARCH} to ${USER}@${HOST}:${REMOTE_INCOMING}/"
 ssh "${USER}@${HOST}" "mkdir -p ${REMOTE_INCOMING}"
-rsync -av --delete "${debs[@]}" "${USER}@${HOST}:${REMOTE_INCOMING}/"
+rsync -av "${debs[@]}" "${USER}@${HOST}:${REMOTE_INCOMING}/"
 
 ssh "${USER}@${HOST}" \
-    "REPO_ROOT=${REPO_ROOT} INCOMING=${INCOMING} bash -s ${CODENAME} ${ARCH}" \
+    "REPO_ROOT=${REPO_ROOT} INCOMING=${INCOMING} bash -s ${CODENAME} ${ARCH} ${PUBLISH_ID}" \
     <"$IMPORT_SCRIPT"
 
 echo "Published to ${CODENAME}/${ARCH}"
