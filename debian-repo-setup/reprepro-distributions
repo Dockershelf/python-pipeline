@@ -11,16 +11,16 @@ Origin: Dockershelf
 Label: Dockershelf Python
 Suite: stable
 Codename: trixie
-Architectures: amd64 source
+Architectures: amd64 arm64 source
 Components: main
-Description: Dockershelf Python packages for Debian trixie
+Description: Dockershelf packages for Debian trixie
 SignWith: SIGNWITH_KEY_ID
 
 Origin: Dockershelf
 Label: Dockershelf Python
 Suite: unstable
 Codename: unstable
-Architectures: amd64 source
+Architectures: amd64 arm64 source
 Components: main
-Description: Dockershelf Python packages for Debian unstable
+Description: Dockershelf packages for Debian unstable
 SignWith: SIGNWITH_KEY_ID

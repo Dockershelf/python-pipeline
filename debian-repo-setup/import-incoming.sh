@@ -16,7 +16,12 @@ ARCH="${2:-}"
 REPO_ROOT="${REPO_ROOT:-/var/www/debian}"
 INCOMING="${INCOMING:-${REPO_ROOT}/incoming}"
 GNUPGHOME="${GNUPGHOME:-${REPO_ROOT}/.gnupg}"
+PUBLISH_LOCK="${PUBLISH_LOCK:-${REPO_ROOT}/.publish.lock}"
 export GNUPGHOME
+
+reprepro_locked() {
+    flock -w 600 "$PUBLISH_LOCK" reprepro "$@"
+}
 
 # Scope to per-arch subdir if ARCH is given (multi-arch publish isolation)
 if [[ -n "$ARCH" ]]; then
@@ -32,27 +37,32 @@ deb_matches_codename() {
     [[ "$(basename "$deb")" == *"+${CODENAME}"* ]]
 }
 
+deb_matches_arch() {
+    local deb="$1"
+    [[ -z "$ARCH" ]] || [[ "$(basename "$deb")" == *_"${ARCH}".deb ]]
+}
+
 include_deb() {
     local deb="$1"
     local pkg version rc=0
     pkg="$(dpkg-deb -f "$deb" Package)"
     version="$(dpkg-deb -f "$deb" Version)"
 
-    if reprepro -b "${REPO_ROOT}" list "${CODENAME}" "${pkg}" 2>/dev/null \
+    if reprepro_locked -b "${REPO_ROOT}" list "${CODENAME}" "${pkg}" 2>/dev/null \
         | grep -qF "${version}"; then
         echo "Removing existing ${pkg}=${version} from ${CODENAME} before import..." >&2
-        reprepro -b "${REPO_ROOT}" remove "${CODENAME}" "${pkg}" || true
+        reprepro_locked -b "${REPO_ROOT}" remove "${CODENAME}" "${pkg}" || true
     fi
 
-    if reprepro -b "${REPO_ROOT}" includedeb "${CODENAME}" "${deb}"; then
+    if reprepro_locked -b "${REPO_ROOT}" includedeb "${CODENAME}" "${deb}"; then
         CLEAN_PKGS+=("${pkg}")
         return 0
     fi
     rc=$?
 
     echo "reprepro includedeb failed for ${pkg} (exit ${rc}); removing and retrying once..." >&2
-    reprepro -b "${REPO_ROOT}" remove "${CODENAME}" "${pkg}" || true
-    reprepro -b "${REPO_ROOT}" includedeb "${CODENAME}" "${deb}"
+    reprepro_locked -b "${REPO_ROOT}" remove "${CODENAME}" "${pkg}" || true
+    reprepro_locked -b "${REPO_ROOT}" includedeb "${CODENAME}" "${deb}"
     RETRIED_PKGS+=("${pkg}")
 }
 
@@ -67,6 +77,10 @@ matched=0
 for deb in "${debs[@]}"; do
     if ! deb_matches_codename "$deb"; then
         echo "Skipping ${deb} (not for ${CODENAME})"
+        continue
+    fi
+    if ! deb_matches_arch "$deb"; then
+        echo "Skipping ${deb} (not for ${ARCH})"
         continue
     fi
     matched=$((matched + 1))
@@ -89,6 +103,6 @@ if [ "${#RETRIED_PKGS[@]}" -gt 0 ]; then
 fi
 
 # Regenerate indices (picks up new arches automatically)
-reprepro -b "${REPO_ROOT}" export
+reprepro_locked -b "${REPO_ROOT}" export
 
 echo "Done. Repository updated under ${REPO_ROOT}/dists/${CODENAME}/"

@@ -237,6 +237,9 @@ jobs:
             --arch "${{ matrix.arch }}"
 
   publish:
+    concurrency:
+      group: dockershelf-apt-publish
+      cancel-in-progress: false
     needs: [smoke, update]
     if: inputs.publish && vars.DEPLOY_HOST != ''
     runs-on: ubuntu-latest

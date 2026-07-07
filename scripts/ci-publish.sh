@@ -32,7 +32,7 @@ fi
 
 echo "Publishing ${#debs[@]} package(s) for ${CODENAME}/${ARCH} to ${USER}@${HOST}:${REMOTE_INCOMING}/"
 ssh "${USER}@${HOST}" "mkdir -p ${REMOTE_INCOMING}"
-rsync -av "${debs[@]}" "${USER}@${HOST}:${REMOTE_INCOMING}/"
+rsync -av --delete "${debs[@]}" "${USER}@${HOST}:${REMOTE_INCOMING}/"
 
 ssh "${USER}@${HOST}" \
     "REPO_ROOT=${REPO_ROOT} INCOMING=${INCOMING} bash -s ${CODENAME} ${ARCH}" \
