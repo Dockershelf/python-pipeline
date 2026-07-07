@@ -48,10 +48,20 @@ include_deb() {
     pkg="$(dpkg-deb -f "$deb" Package)"
     version="$(dpkg-deb -f "$deb" Version)"
 
-    if reprepro_locked -b "${REPO_ROOT}" list "${CODENAME}" "${pkg}" 2>/dev/null \
+    # Scope reprepro operations to the target architecture when ARCH is set.
+    # Without -A, `reprepro remove <codename> <pkg>` deletes the package for
+    # ALL architectures and removes every arch's pool file — a concurrent or
+    # prior publish of another arch would then lose its files. -A limits the
+    # list/remove to the arch being imported so cross-arch pool files survive.
+    local arch_args=()
+    if [[ -n "${ARCH:-}" ]]; then
+        arch_args=(-A "${ARCH}")
+    fi
+
+    if reprepro_locked -b "${REPO_ROOT}" "${arch_args[@]}" list "${CODENAME}" "${pkg}" 2>/dev/null \
         | grep -qF "${version}"; then
-        echo "Removing existing ${pkg}=${version} from ${CODENAME} before import..." >&2
-        reprepro_locked -b "${REPO_ROOT}" remove "${CODENAME}" "${pkg}" || true
+        echo "Removing existing ${pkg}=${version} from ${CODENAME}/${ARCH:-all} before import..." >&2
+        reprepro_locked -b "${REPO_ROOT}" "${arch_args[@]}" remove "${CODENAME}" "${pkg}" || true
     fi
 
     if reprepro_locked -b "${REPO_ROOT}" includedeb "${CODENAME}" "${deb}"; then
@@ -61,7 +71,7 @@ include_deb() {
     rc=$?
 
     echo "reprepro includedeb failed for ${pkg} (exit ${rc}); removing and retrying once..." >&2
-    reprepro_locked -b "${REPO_ROOT}" remove "${CODENAME}" "${pkg}" || true
+    reprepro_locked -b "${REPO_ROOT}" "${arch_args[@]}" remove "${CODENAME}" "${pkg}" || true
     reprepro_locked -b "${REPO_ROOT}" includedeb "${CODENAME}" "${deb}"
     RETRIED_PKGS+=("${pkg}")
 }
