@@ -16,8 +16,6 @@ on:
     secrets:
       DEPLOY_SSH_KEY:
         required: false
-      GH_PACKAGES_TOKEN:
-        required: false
 
 permissions:
   contents: write
@@ -62,7 +60,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull builder images
         env:
@@ -156,7 +154,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull builder images
         env:
