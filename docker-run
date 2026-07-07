@@ -16,6 +16,17 @@ def main() -> NoReturn:
 
     deb_fullname = os.environ.get('DEBFULLNAME', name)
     deb_email = os.environ.get('DEBEMAIL', email)
+    forwarded_env = []
+    for var in (
+        'DEB_BUILD_OPTIONS',
+        'DEB_CFLAGS_MAINT_APPEND',
+        'DEB_CXXFLAGS_MAINT_APPEND',
+        'DEB_CPPFLAGS_MAINT_APPEND',
+        'DEB_LDFLAGS_MAINT_APPEND',
+        'DOCKERSHELF_ARCH',
+    ):
+        if var in os.environ:
+            forwarded_env.extend(('--env', f'{var}={os.environ[var]}'))
 
     cmd = (
         'docker', 'run', *rm_flag, interactive,
@@ -25,6 +36,7 @@ def main() -> NoReturn:
         '--env', f'GIT_COMMITTER_EMAIL={email}',
         '--env', f'DEBFULLNAME={deb_fullname}',
         '--env', f'DEBEMAIL={deb_email}',
+        *forwarded_env,
         *sys.argv[1:],
     )
     os.execvp(cmd[0], cmd)

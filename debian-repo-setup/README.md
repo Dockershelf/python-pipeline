@@ -48,7 +48,7 @@ This rsyncs `dist/*.deb` to the droplet and runs `import-incoming.sh` over SSH.
 ## Client apt line
 
 ```text
-deb [signed-by=/usr/share/keyrings/dockershelf-python.gpg] https://apt.luisalejandro.org/dockershelf trixie main
+deb [signed-by=/usr/share/keyrings/dockershelf.gpg] https://apt.luisalejandro.org/dockershelf trixie main
 ```
 
 Use codename matching the image base (`trixie` or `unstable`).
@@ -57,7 +57,7 @@ Install the signing public key on clients:
 
 ```bash
 curl -fsSL https://apt.luisalejandro.org/dockershelf/dockershelf-apt-signing.pub \
-  | gpg --dearmor | sudo tee /usr/share/keyrings/dockershelf-python.gpg >/dev/null
+  | gpg --dearmor | sudo tee /usr/share/keyrings/dockershelf.gpg >/dev/null
 ```
 
 (Adjust URL if you copy the key elsewhere.)

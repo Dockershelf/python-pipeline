@@ -1,3 +1,5 @@
 config.env
 dist/
 debian-repo-setup/keys/
+__pycache__/
+*.pyc

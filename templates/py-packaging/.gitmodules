@@ -1,0 +1,4 @@
+[submodule "cpython"]
+	path = cpython
+	url = https://github.com/python/cpython.git
+	branch = __PY_MINOR__

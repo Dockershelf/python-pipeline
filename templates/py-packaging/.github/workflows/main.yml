@@ -1,0 +1,32 @@
+name: packaging
+
+on:
+  schedule:
+    - cron: '0 6 * * 2'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish .debs to APT droplet after smoke test
+        type: boolean
+        default: true
+      arches:
+        description: Architectures to build (JSON array)
+        type: string
+        default: '["amd64","arm64"]'
+
+concurrency:
+  group: packaging-${{ github.repository }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  pipeline:
+    uses: Dockershelf/python-pipeline/.github/workflows/update-meta-gbp.yml@main
+    with:
+      dists-json: '["trixie","unstable"]'
+      arches-json: ${{ github.event_name == 'workflow_dispatch' && inputs.arches || '["amd64","arm64"]' }}
+      publish: ${{ github.event_name == 'workflow_dispatch' && inputs.publish || github.event_name == 'schedule' }}
+    secrets: inherit

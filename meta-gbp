@@ -199,8 +199,12 @@ def _reference_args() -> tuple[str, ...]:
         return ()
 
 
-def _ensure_submodule_available() -> None:
+def _ensure_submodule_available(*, required: bool = False) -> None:
     if not os.path.isdir('cpython/Python'):
+        if not required:
+            return
+        if not os.path.exists('.gitmodules'):
+            raise SystemExit('cpython submodule required; run init-cpython-submodules.sh')
         _cmd_q('git', 'submodule', 'update', '--init', *_reference_args())
     if _cmd_r('git', 'diff', '--quiet', '--no-ext-diff', 'cpython'):
         _cmd_q('git', 'submodule', 'update', '--init')
@@ -464,18 +468,20 @@ def main() -> int:
 
     args = parser.parse_args()
 
+    if args.command == 'update':
+        _ensure_submodule_available(required=True)
+        return _update(rev=args.rev, interactive=args.interactive)
+
     _ensure_submodule_available()
 
     if args.command == 'build':
         return _build()
-    elif args.command == 'changelog':
+    if args.command == 'changelog':
         return _changelog(args.message, only=args.only)
-    elif args.command == 'materialize':
+    if args.command == 'materialize':
         return _materialize(args.dist)
-    elif args.command == 'update':
-        return _update(rev=args.rev, interactive=args.interactive)
-    else:
-        raise NotImplementedError(f'{args.command=}')
+
+    raise NotImplementedError(f'{args.command=}')
 
 
 if __name__ == '__main__':

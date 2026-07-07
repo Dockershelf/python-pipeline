@@ -28,11 +28,14 @@ for f in meta-gbp build docker-run tools; do
     fi
 done
 
-git -C "$PY_REPO_DIR" submodule update --init cpython
-git -C "$PY_REPO_DIR/cpython" fetch --tags origin
+if [[ ! -f "$PY_REPO_DIR/.gitmodules" ]]; then
+    echo "missing $PY_REPO_DIR/.gitmodules" >&2
+    exit 1
+fi
 
-if [[ -x "$PIPELINE_DIR/scripts/fix-changelog-headings.sh" ]]; then
-    bash "$PIPELINE_DIR/scripts/fix-changelog-headings.sh" "$PY_REPO_DIR"
+git -C "$PY_REPO_DIR" submodule update --init cpython || true
+if [[ -d "$PY_REPO_DIR/cpython/.git" ]]; then
+    git -C "$PY_REPO_DIR/cpython" fetch --tags origin || true
 fi
 
 export PY_REPO_DIR

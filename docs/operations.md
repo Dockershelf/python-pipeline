@@ -32,17 +32,9 @@ make build-tools-image
 - `Maintainer:` — same identity as above
 - `Vcs-Browser:` / `Vcs-Git:` — `https://github.com/Dockershelf/py3.XX` (not Debian salsa)
 
-Keep `control.in` and `control` in sync. After bulk updates:
+These fields are baked into the template (`templates/py-packaging/`) with the correct maintainer/Vcs values, so freshly seeded repos are already correct. Keep `control.in` and `control` in sync when editing packaging metadata.
 
-```bash
-./scripts/retarget-py3-control.sh   # from python-pipeline/
-```
-
-**Packaging-only mainline changelog** (no upstream bump): `meta-gbp changelog -m '...' --only trixie`. If legacy changelog formatting breaks `dch`, use:
-
-```bash
-python3 scripts/bump-mainline-changelog.py -m 'Your message.' ..
-```
+**Packaging-only mainline changelog** (no upstream bump): `meta-gbp changelog -m '...' --only trixie`.
 
 ---
 
@@ -53,43 +45,26 @@ Use this when Dockershelf should ship a **new `py3.XX` repo** (first time packag
 ### 1.1 Create the packaging repository
 
 1. Create `Dockershelf/py3.15` on GitHub (empty repo).
-2. Seed from the closest existing line:
+2. Seed from the python-pipeline template:
 
    ```bash
    cd python-pipeline
-   ./scripts/seed-py-repo.sh 3.15 ../py3.15 --from 3.14
+   ./scripts/seed-py-repo.sh 3.15 ../py3.15
    cd ../py3.15
    git remote add origin https://github.com/Dockershelf/py3.15.git
    git push -u origin main
    ```
 
-   Or clone manually if you prefer to keep full history from an existing line.
+   The seed script copies `templates/py-packaging/`, substitutes `__PY_MINOR__` → `3.15` and `__PY_MINOR_DIR__` → `py3.15`, and registers the `cpython/` submodule gitlink pointing to the `3.15` branch HEAD.
 
-### 1.2 Repoint cpython and retarget packaging metadata
+### 1.2 Initialize cpython and review patches
 
 ```bash
 cd py3.15
 git submodule update --init cpython
-git -C cpython fetch origin
-git -C cpython checkout 3.15   # or the appropriate release branch
-git add cpython
 ```
 
-Update **every** file under `debiandirs/` and `changelogs/` that still says `3.14` → `3.15` (package names, paths, `VER=` in `debian/rules` templates). Practical approach:
-
-- Copy `debiandirs/trixie` and `debiandirs/unstable` from a freshly validated tree, or
-- Run a careful search-replace on `python3.14` → `python3.15`, `libpython3.14` → `libpython3.15`, etc.
-
-Ensure both suites exist and match:
-
-```text
-debiandirs/trixie/
-debiandirs/unstable/
-changelogs/mainline/trixie
-changelogs/mainline/unstable
-```
-
-Set initial changelog versions, e.g. `3.15.0-1+trixie1` and `3.15.0-1+unstable1`, with `distribution:` set to `trixie` / `unstable`.
+The template ships `debiandirs/trixie/`, `debiandirs/unstable/`, `changelogs/mainline/{trixie,unstable}`, and `patches/` with initial changelog versions (`3.15.0-1+trixie1` and `3.15.0-1+unstable1`).
 
 Review `patches/series` — drop or refresh patches that no longer apply to 3.15.
 

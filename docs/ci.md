@@ -17,7 +17,6 @@ re-enable by restoring `'["trixie", "unstable"]'` once trixie builder images are
 | [`update-meta-gbp.yml`](../.github/workflows/update-meta-gbp.yml) | `python-pipeline` | Reusable: update → build → smoke → publish |
 | [`pr.yml`](../.github/workflows/pr.yml) | `python-pipeline` | `pre-commit` on pull requests |
 | [`publish.yml`](../.github/workflows/publish.yml) | `python-pipeline` | Manual republish of local `dist/` to APT |
-| [`deploy-connectivity.yml`](../.github/workflows/deploy-connectivity.yml) | `python-pipeline` | Manual SSH/incoming-dir check (no rsync) |
 | [`main.yml`](https://github.com/Dockershelf/py3.14/blob/main/.github/workflows/main.yml) | each `py3.XX` | Weekly Tuesday schedule + dispatch → calls reusable workflow |
 
 ## CI workspace layout
@@ -109,19 +108,14 @@ Scheduled runs publish when `DEPLOY_SSH_KEY` is configured. Use `workflow_dispat
 
 **Republish existing debs:** `python-pipeline` → Actions → publish → choose suite (expects `dist/*.deb` checked in or uploaded to runner workspace — typically re-run build artifact flow instead).
 
-## `deploy-status` summary job
-
-The reusable workflow has a final `deploy-status` job that runs **only when** `smoke` succeeded but `publish` was skipped (because `DEPLOY_HOST` is empty). It writes a short summary to the run's job summary explaining that build and smoke passed but publish was not configured. It never runs when publish succeeds or when smoke fails.
-
 ## Failure modes
 
 | Failure | Action |
 |---------|--------|
-| `meta-gbp update` / `dch` exit 25 | Changelog heading has a space before `)` (e.g. `1+trixie1 )`). Run [`scripts/fix-changelog-headings.sh`](../scripts/fix-changelog-headings.sh) on the py repo; CI runs this automatically via `ci-setup-workspace.sh` |
 | `meta-gbp update` rebase conflict | Resolve locally, push fix, re-run workflow |
 | Builder image pull fails | CI falls back to `make build-tools-image build-builder-images` (slow) |
 | Smoke test `apt-get -f install` fails | Check missing runtime deps in generated `.deb` set |
-| Publish SSH/rsync fails | Verify `DEPLOY_*` variables and `DEPLOY_SSH_KEY`; run **Deploy connectivity** workflow |
+| Publish SSH/rsync fails | Verify `DEPLOY_*` variables and `DEPLOY_SSH_KEY` |
 | arm64 runner unavailable | `ubuntu-24.04-arm` runners are GitHub-hosted; ensure `arches` only includes `arm64` when repo/plan supports it |
 
 ## Reference py for Dockerfiles

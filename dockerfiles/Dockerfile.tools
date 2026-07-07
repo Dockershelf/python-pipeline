@@ -9,6 +9,7 @@ RUN : \
         git-buildpackage \
         gnupg \
         pristine-tar \
+        wget \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 ENV HOME=/tmp/src LANG=C.UTF-8

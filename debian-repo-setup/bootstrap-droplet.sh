@@ -152,7 +152,7 @@ Next steps:
   2. TLS: certbot --nginx -d ${APT_HOSTNAME}
   3. GitHub: set DEPLOY_SSH_KEY and DEPLOY_* variables (see docs/deploy-setup.md)
   4. Client apt line (after TLS):
-       deb [signed-by=/usr/share/keyrings/dockershelf-python.gpg] https://${APT_HOSTNAME}/dockershelf trixie main
+       deb [signed-by=/usr/share/keyrings/dockershelf.gpg] https://${APT_HOSTNAME}/dockershelf trixie main
   5. Copy signing key for image builds:
        scp ${DEPLOY_USER}@\$(hostname -I | awk '{print \$1}'):${PUBKEY_EXPORT} ./
 

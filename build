@@ -51,6 +51,10 @@ def main() -> NoReturn:
     os.makedirs(dist_dir, exist_ok=True)
     gbp_args = '-us -uc'
     gpg_setup = 'chmod 700 ~/.gnupg && ' if _gpg_volumes() else ''
+    # Filter out _all.deb on non-amd64 arches (built only on amd64 to avoid duplicates)
+    copy_filter = ''
+    if ARCH != 'amd64':
+        copy_filter = r"! -name '*_all.deb'"
     prog = (
         f'{gpg_setup}'
         f'apt-get update -qq && '
@@ -60,7 +64,7 @@ def main() -> NoReturn:
         f'apt-get build-dep -y -o Debug::pkgProblemResolver=yes . && '
         f'git clean -fxfd && '
         f'gbp buildpackage {gbp_args} --git-pristine-tar --git-debian-branch=debian/{dist} && '
-        f'find .. -maxdepth 1 -type f -name "*.deb" | xargs --replace cp {{}} /dist'
+        f'find .. -maxdepth 1 -type f -name "*.deb" {copy_filter} | xargs --replace cp {{}} /dist'
     )
     cmd = (
         DOCKER_RUN,

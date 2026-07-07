@@ -1,0 +1,289 @@
+Source: python__PY_MINOR__
+Section: python
+Priority: optional
+Maintainer: Luis Alejandro Martínez Faneyth <luis@luisalejandro.org>
+Build-Depends: debhelper (>= 9), dpkg-dev (>= 1.17.11),
+  quilt, autoconf,
+  lsb-release, sharutils,
+  libreadline-dev, libncursesw5-dev (>= 5.3), 
+  zlib1g-dev, libbz2-dev, liblzma-dev,
+  libgdbm-dev, libdb-dev,
+  tk-dev, blt-dev (>= 2.4z), libssl-dev,
+  libexpat1-dev,
+  libbluetooth-dev [!hurd-i386 !kfreebsd-i386 !kfreebsd-amd64],
+  locales [!armel !avr32 !hppa !ia64 !mipsel],
+  libsqlite3-dev, libffi-dev (>= 3.0.5) [!or1k !avr32],
+  libgpm2 [!hurd-i386 !kfreebsd-i386 !kfreebsd-amd64],
+  media-types, netbase, bzip2, time, python3:any,
+  net-tools, xvfb, xauth
+Build-Depends-Indep: python3-sphinx, texinfo
+Standards-Version: 4.3.0
+Vcs-Browser: https://github.com/Dockershelf/__PY_MINOR_DIR__
+Vcs-Git: https://github.com/Dockershelf/__PY_MINOR_DIR__.git
+XS-Testsuite: autopkgtest
+
+Package: python__PY_MINOR__
+Architecture: any
+Multi-Arch: allowed
+Priority: optional
+Depends: libpython__PY_MINOR__-stdlib (= ${binary:Version}),
+ media-types,
+ ${shlibs:Depends}, ${misc:Depends}
+Suggests: python__PY_MINOR__-venv, binutils
+Breaks: ${python39:Breaks}
+Description: Interactive high-level object-oriented language (version __PY_MINOR__)
+ Python is a high-level, interactive, object-oriented language. Its __PY_MINOR__ version
+ includes an extensive class library with lots of goodies for
+ network programming, system administration, sounds and graphics.
+
+Package: python__PY_MINOR__-venv
+Architecture: any
+Multi-Arch: allowed
+Priority: optional
+Depends: python__PY_MINOR__ (= ${binary:Version}),
+ ${shlibs:Depends}, ${misc:Depends},
+Breaks: python3-pip (<< 1.5.6-4)
+Description: Interactive high-level object-oriented language (pyvenv binary, version __PY_MINOR__)
+ Python is a high-level, interactive, object-oriented language. Its __PY_MINOR__ version
+ includes an extensive class library with lots of goodies for
+ network programming, system administration, sounds and graphics.
+ .
+ This package contains the pyvenv-__PY_MINOR__ binary.
+
+Package: libpython__PY_MINOR__-stdlib
+Architecture: any
+Multi-Arch: same
+Priority: optional
+Pre-Depends: ${misc:Pre-Depends}
+Depends: media-types, tzdata, ${shlibs:Depends}, ${misc:Depends}
+Recommends: ca-certificates
+Description: Interactive high-level object-oriented language (standard library, version __PY_MINOR__)
+ Python is a high-level, interactive, object-oriented language. Its __PY_MINOR__ version
+ includes an extensive class library with lots of goodies for
+ network programming, system administration, sounds and graphics.
+ .
+ This package contains Python __PY_MINOR__'s standard library. It is normally not
+ used on its own, but as a dependency of python__PY_MINOR__.
+
+Package: libpython__PY_MINOR__
+Architecture: any
+Multi-Arch: same
+Section: libs
+Priority: optional
+Pre-Depends: ${misc:Pre-Depends}
+Depends: libpython__PY_MINOR__-stdlib (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Shared Python runtime library (version __PY_MINOR__)
+ Python is a high-level, interactive, object-oriented language. Its __PY_MINOR__ version
+ includes an extensive class library with lots of goodies for
+ network programming, system administration, sounds and graphics.
+ .
+ This package contains the shared runtime library, normally not needed
+ for programs using the statically linked interpreter.
+
+Package: python__PY_MINOR__-examples
+Architecture: all
+Depends: python__PY_MINOR__ (>= ${source:Version}), ${misc:Depends}
+Description: Examples for the Python language (v__PY_MINOR__)
+ Examples, Demos and Tools for Python (v__PY_MINOR__). These are files included in
+ the upstream Python distribution (v__PY_MINOR__).
+
+Package: python__PY_MINOR__-dev
+Architecture: any
+Multi-Arch: allowed
+Depends: python__PY_MINOR__ (= ${binary:Version}), libpython__PY_MINOR__-dev (= ${binary:Version}), libpython__PY_MINOR__ (= ${binary:Version}), libexpat1-dev, ${shlibs:Depends}, ${misc:Depends}
+Recommends: libc6-dev | libc-dev
+Description: Header files and a static library for Python (v__PY_MINOR__)
+ Header files, a static library and development tools for building
+ Python (v__PY_MINOR__) modules, extending the Python interpreter or embedding
+ Python (v__PY_MINOR__) in applications.
+ .
+ Maintainers of Python packages should read README.maintainers.
+
+Package: libpython__PY_MINOR__-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: libpython__PY_MINOR__-stdlib (= ${binary:Version}), libpython__PY_MINOR__ (= ${binary:Version}), libexpat1-dev, ${shlibs:Depends}, ${misc:Depends}
+Recommends: libc6-dev | libc-dev
+Description: Header files and a static library for Python (v__PY_MINOR__)
+ Header files, a static library and development tools for building
+ Python (v__PY_MINOR__) modules, extending the Python interpreter or embedding
+ Python (v__PY_MINOR__) in applications.
+ .
+ Maintainers of Python packages should read README.maintainers.
+ .
+ This package contains development files. It is normally not
+ used on it's own, but as a dependency of python__PY_MINOR__-dev.
+
+Package: libpython__PY_MINOR__-testsuite
+Section: libdevel
+Architecture: all
+Depends: python__PY_MINOR__ (>= ${binary:Version}), ${misc:Depends}, net-tools
+Suggests: python__PY_MINOR__-gdbm, python__PY_MINOR__-tk
+Description: Testsuite for the Python standard library (v__PY_MINOR__)
+ The complete testsuite for the Python standard library.  Note that
+ a subset is found in the libpython__PY_MINOR__-stdlib package, which should
+ be enough for other packages to use (please do not build-depend
+ on this package, but file a bug report to include additional 
+ testsuite files in the libpython__PY_MINOR__-stdlib package).
+
+Package: idle-python__PY_MINOR__
+Architecture: all
+Depends: python__PY_MINOR__, python__PY_MINOR__-tk,
+  ${misc:Depends},
+  libjs-mathjax,
+Enhances: python__PY_MINOR__
+Description: IDE for Python (v__PY_MINOR__) using Tkinter
+ IDLE is an Integrated Development Environment for Python (v__PY_MINOR__).
+ IDLE is written using Tkinter and therefore quite platform-independent.
+
+Package: python__PY_MINOR__-dbg
+Section: debug
+Architecture: any
+Multi-Arch: allowed
+Depends: python__PY_MINOR__ (= ${binary:Version}), libpython__PY_MINOR__-dbg (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Recommends: gdb
+Suggests: python__PY_MINOR__-gdbm-dbg, python__PY_MINOR__-tk-dbg
+Description: Debug Build of the Python Interpreter (version __PY_MINOR__)
+ The package holds two things:
+ .
+ - A Python interpreter configured with --pydebug. Dynamically loaded modules
+   are searched as <foo>_d.so first. Third party extensions need a separate
+   build to be used by this interpreter.
+ - Debug information for standard python interpreter and extensions.
+ .
+ See the README.debug for more information.
+
+Package: libpython__PY_MINOR__-dbg
+Section: debug
+Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: libpython__PY_MINOR__-stdlib (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Debug Build of the Python Interpreter (version __PY_MINOR__)
+ The package holds two things:
+ .
+ - Extensions for a Python interpreter configured with --pydebug.
+ - Debug information for standard python extensions.
+ .
+ See the README.debug for more information.
+
+Package: python__PY_MINOR__-nogil
+Section: debug
+Architecture: any
+Multi-Arch: allowed
+Depends: python__PY_MINOR__ (= ${binary:Version}), libpython__PY_MINOR__-nogil (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Recommends: gdb
+Suggests: python__PY_MINOR__-gdbm-nogil, python__PY_MINOR__-tk-nogil
+Description: No-GIL Build of the Python Interpreter (version __PY_MINOR__)
+ The package holds two things:
+ .
+ - A Python interpreter configured with --disable-gil. Dynamically loaded modules
+   are searched as <foo>_t.so first. Third party extensions need a separate
+   build to be used by this interpreter.
+
+Package: libpython__PY_MINOR__-nogil
+Section: debug
+Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: libpython__PY_MINOR__-stdlib (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: No-GIL Build of the Python Interpreter (version __PY_MINOR__)
+ The package holds two things:
+ .
+ - Extensions for a Python interpreter configured with --pydebug.
+
+Package: python__PY_MINOR__-tk
+Architecture: any
+Multi-Arch: same
+Depends: python__PY_MINOR__, ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}
+Provides: ${python:Provides}
+Suggests: tix, python__PY_MINOR__-tk-dbg
+Description: Tkinter - Writing Tk applications with Python (version __PY_MINOR__)
+ A module for writing portable GUI applications with Python (version __PY_MINOR__)
+ using Tk. Also known as Tkinter.
+
+Package: python__PY_MINOR__-gdbm
+Architecture: any
+Multi-Arch: same
+Depends: python__PY_MINOR__, ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}
+Provides: ${python:Provides}
+Suggests: python__PY_MINOR__-gdbm-dbg
+Description: GNU dbm database support for Python (version __PY_MINOR__)
+ GNU dbm database module for Python (version __PY_MINOR__). Install this if you want to
+ create or read GNU dbm database files with Python.
+
+Package: python__PY_MINOR__-tk-dbg
+Architecture: any
+Multi-Arch: same
+Priority: extra
+Section: debug
+Depends: python__PY_MINOR__-dbg, ${python:Depends}, python__PY_MINOR__-tk (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Tkinter - Writing Tk applications with Python (version __PY_MINOR__ debug extension)
+ A module for writing portable GUI applications with Python (version __PY_MINOR__)
+ using Tk. Also known as Tkinter.
+ .
+ This package contains the extensions built for the Python debug interpreter.
+
+Package: python__PY_MINOR__-gdbm-dbg
+Architecture: any
+Multi-Arch: same
+Priority: extra
+Section: debug
+Depends: python__PY_MINOR__-dbg, ${python:Depends}, python__PY_MINOR__-gdbm (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: GNU dbm database support for Python (version __PY_MINOR__ debug extension)
+ GNU dbm database module for Python (version __PY_MINOR__). Install this if you want to
+ create or read GNU dbm database files with Python.
+ .
+ This package contains the extensions built for the Python debug interpreter.
+
+Package: python__PY_MINOR__-tk-nogil
+Architecture: any
+Multi-Arch: same
+Priority: extra
+Section: debug
+Depends: python__PY_MINOR__-nogil, ${python:Depends}, python__PY_MINOR__-tk (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Tkinter - Writing Tk applications with Python (version __PY_MINOR__ nogil extension)
+ A module for writing portable GUI applications with Python (version __PY_MINOR__)
+ using Tk. Also known as Tkinter.
+ .
+ This package contains the extensions built for the Python nogil interpreter.
+
+Package: python__PY_MINOR__-gdbm-nogil
+Architecture: any
+Multi-Arch: same
+Priority: extra
+Section: debug
+Depends: python__PY_MINOR__-nogil, ${python:Depends}, python__PY_MINOR__-gdbm (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: GNU dbm database support for Python (version __PY_MINOR__ nogil extension)
+ GNU dbm database module for Python (version __PY_MINOR__). Install this if you want to
+ create or read GNU dbm database files with Python.
+ .
+ This package contains the extensions built for the Python nogil interpreter.
+
+Package: python__PY_MINOR__-full
+Architecture: any
+Multi-Arch: allowed
+Depends: python__PY_MINOR__ (= ${binary:Version}),
+  libpython__PY_MINOR__-testsuite,
+  python__PY_MINOR__-venv (= ${binary:Version}),
+  idle-python__PY_MINOR__,
+  python__PY_MINOR__-gdbm,
+  python__PY_MINOR__-tk,
+  ca-certificates,
+  ${shlibs:Depends}, ${misc:Depends}
+Recommends: python__PY_MINOR__-examples,
+Suggests: python__PY_MINOR__-dev
+Description: Python Interpreter with complete class library (version __PY_MINOR__)
+ Python, the high-level, interactive object oriented language,
+ includes an extensive class library with lots of goodies for
+ network programming, system administration, sounds and graphics.
+ .
+ This package is a dependency package, which depends on the full
+ standard library of Python for Python developers. Including modules
+ used only at build-time, venv, and modules with
+ complex dependencies, such as tk and IDLE. All batteries included.
+ .
+ According to the Debian Python policy, this package must not be used in
+ build dependencies, dependencies and recommendations.

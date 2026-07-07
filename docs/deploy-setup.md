@@ -16,8 +16,6 @@ py3.XX workflow  →  update-meta-gbp.yml  →  build  →  smoke  →  publish
                                                                               nginx /dockershelf/
 ```
 
-Use [`deploy-connectivity.yml`](../.github/workflows/deploy-connectivity.yml) to verify SSH and paths without publishing packages.
-
 ## 1. DNS
 
 Create an **A** record:
@@ -117,7 +115,7 @@ make publish DIST=trixie
 ## Client apt source
 
 ```text
-deb [signed-by=/usr/share/keyrings/dockershelf-python.gpg] https://apt.luisalejandro.org/dockershelf trixie main
+deb [signed-by=/usr/share/keyrings/dockershelf.gpg] https://apt.luisalejandro.org/dockershelf trixie main
 ```
 
 Export the signing key from the droplet (`/var/www/debian/dockershelf-apt-signing.pub`) for image builds and client setup.

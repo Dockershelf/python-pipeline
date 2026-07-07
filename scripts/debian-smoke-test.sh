@@ -59,7 +59,7 @@ if [[ "$FROM_APT" -eq 0 && -z "$DIST_DIR" ]]; then
 fi
 
 IMAGE="debian:${DIST}-slim"
-CONTAINER="dockershelf-smoke-$$"
+CONTAINER="dockershelf-python-smoke-$$"
 trap 'docker rm -f "$CONTAINER" >/dev/null 2>&1 || true' EXIT
 
 docker run -d --name "$CONTAINER" --platform "linux/${ARCH}" "$IMAGE" sleep 3600
