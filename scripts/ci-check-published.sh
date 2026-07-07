@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
-# Check whether a package version is already in the APT repository on the droplet.
+# Check whether a package version is already in the public APT repository.
 #
 # When already published, sets GITHUB_OUTPUT skip=true so CI can skip build/smoke/publish.
-# When DEPLOY_HOST is unset, always sets skip=false (local / unconfigured publish).
 #
 # Usage (from packaging repo root, changelog mode):
-#   DEPLOY_HOST=... DEPLOY_USER=... DEPLOY_DIR=... \
-#     ./scripts/ci-check-published.sh trixie amd64
+#   ./scripts/ci-check-published.sh trixie amd64
 #
 # Usage (from a directory with .deb files, deb mode):
 #   ./scripts/ci-check-published.sh --deb dist trixie amd64
@@ -22,6 +20,8 @@ fi
 CODENAME="${1:?usage: ci-check-published.sh [--deb <dir>] <trixie|unstable> <arch>}"
 ARCH="${2:?usage: ci-check-published.sh [--deb <dir>] <trixie|unstable> <arch>}"
 
+APT_URL="${DOCKERSHELF_APT_URL:-https://apt.luisalejandro.org/dockershelf}"
+
 write_outputs() {
     local skip="$1"
     local reason="$2"
@@ -31,18 +31,6 @@ write_outputs() {
     fi
     echo "${reason}"
 }
-
-if [[ -z "${DEPLOY_HOST:-}" ]]; then
-    write_outputs false "skip=false (DEPLOY_HOST not configured)"
-    exit 0
-fi
-
-for var in DEPLOY_USER DEPLOY_DIR; do
-    if [[ -z "${!var:-}" ]]; then
-        echo "missing ${var}" >&2
-        exit 1
-    fi
-done
 
 if [[ -n "$DEB_DIR" ]]; then
     shopt -s nullglob
@@ -77,30 +65,27 @@ if [[ -z "$PKG" || -z "$VERSION" ]]; then
     exit 1
 fi
 
-LIST="$(
-    ssh -o BatchMode=yes -o ConnectTimeout=15 \
-        "${DEPLOY_USER}@${DEPLOY_HOST}" \
-        "GNUPGHOME=${DEPLOY_DIR}/.gnupg reprepro -b ${DEPLOY_DIR} list ${CODENAME} ${PKG} 2>/dev/null" \
-        || true
-)"
-
-published=0
-while IFS= read -r line; do
-    [[ -z "$line" ]] && continue
-    if [[ "$line" == *"|${VERSION}|${ARCH}"* ]]; then
-        published=1
-        break
-    fi
-    if [[ "$line" == *"|${VERSION}|all"* ]]; then
-        published=1
-        break
-    fi
-done <<<"$LIST"
-
-if [[ "$published" -eq 1 ]]; then
-    write_outputs true "skip=true: ${PKG}=${VERSION} already in ${CODENAME} for ${ARCH}"
+PACKAGES_URL="${APT_URL}/dists/${CODENAME}/main/binary-${ARCH}/Packages.gz"
+PACKAGES=""
+if ! PACKAGES="$(curl -fsSL "$PACKAGES_URL" | zcat 2>/dev/null)"; then
+    write_outputs false "skip=false (could not fetch ${PACKAGES_URL})"
     exit 0
 fi
 
-write_outputs false "skip=false: ${PKG}=${VERSION} not yet in ${CODENAME} for ${ARCH}"
+published=0
+if awk -v pkg="$PKG" -v ver="$VERSION" '
+    $1 == "Package:" && $2 == pkg { inpkg = 1; next }
+    inpkg && $1 == "Package:" { inpkg = 0 }
+    inpkg && $1 == "Version:" && $2 == ver { found = 1; exit }
+    END { exit !found }
+' <<<"$PACKAGES"; then
+    published=1
+fi
+
+if [[ "$published" -eq 1 ]]; then
+    write_outputs true "skip=true: ${PKG}=${VERSION} already in ${CODENAME}/${ARCH}"
+    exit 0
+fi
+
+write_outputs false "skip=false: ${PKG}=${VERSION} not yet in ${CODENAME}/${ARCH}"
 exit 0

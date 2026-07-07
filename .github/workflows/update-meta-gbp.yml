@@ -131,26 +131,12 @@ jobs:
             "$GITHUB_WORKSPACE" \
             "$GITHUB_WORKSPACE/python-pipeline"
 
-      - name: Setup SSH for publish check
-        if: vars.DEPLOY_HOST != ''
-        uses: webfactory/ssh-agent@v0.10.0
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
-
       - name: Check if already published
         id: published
-        if: vars.DEPLOY_HOST != ''
-        env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
-          DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
-          bash python-pipeline/scripts/ci-check-published.sh "${{ matrix.dist }}" "${{ matrix.arch }}"
+        run: bash python-pipeline/scripts/ci-check-published.sh "${{ matrix.dist }}" "${{ matrix.arch }}"
 
       - name: Free runner disk space
-        if: vars.DEPLOY_HOST == '' || steps.published.outputs.skip != 'true'
+        if: steps.published.outputs.skip != 'true'
         run: |
           echo "Before cleanup:"
           df -h /
@@ -169,7 +155,7 @@ jobs:
           df -h /
 
       - name: Log in to GHCR
-        if: vars.DEPLOY_HOST == '' || steps.published.outputs.skip != 'true'
+        if: steps.published.outputs.skip != 'true'
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -177,7 +163,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull builder images
-        if: vars.DEPLOY_HOST == '' || steps.published.outputs.skip != 'true'
+        if: steps.published.outputs.skip != 'true'
         env:
           PIPELINE_DIR: ${{ github.workspace }}/python-pipeline
           WORKSPACE: ${{ github.workspace }}
@@ -185,13 +171,13 @@ jobs:
         run: bash python-pipeline/scripts/ci-pull-builder-images.sh
 
       - name: Materialize and build
-        if: vars.DEPLOY_HOST == '' || steps.published.outputs.skip != 'true'
+        if: steps.published.outputs.skip != 'true'
         run: |
           python-pipeline/meta-gbp materialize "${{ matrix.dist }}"
           python-pipeline/meta-gbp build
 
       - name: Upload debs
-        if: vars.DEPLOY_HOST == '' || steps.published.outputs.skip != 'true'
+        if: steps.published.outputs.skip != 'true'
         uses: actions/upload-artifact@v7
         with:
           name: debs-${{ matrix.dist }}-${{ matrix.arch }}
@@ -227,35 +213,22 @@ jobs:
           sparse-checkout: |
             scripts
 
-      - name: Setup SSH for publish check
-        if: vars.DEPLOY_HOST != ''
-        uses: webfactory/ssh-agent@v0.10.0
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
-
       - name: Check if already published
         id: published
-        if: vars.DEPLOY_HOST != ''
-        env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
-          DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
         working-directory: packaging-repo
         run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
           bash "$GITHUB_WORKSPACE/python-pipeline/scripts/ci-check-published.sh" \
             "${{ matrix.dist }}" "${{ matrix.arch }}"
 
       - name: Download debs
-        if: vars.DEPLOY_HOST == '' || steps.published.outputs.skip != 'true'
+        if: steps.published.outputs.skip != 'true'
         uses: actions/download-artifact@v8
         with:
           name: debs-${{ matrix.dist }}-${{ matrix.arch }}
           path: dist
 
       - name: Smoke test
-        if: vars.DEPLOY_HOST == '' || steps.published.outputs.skip != 'true'
+        if: steps.published.outputs.skip != 'true'
         run: |
           bash python-pipeline/scripts/debian-smoke-test.sh \
             --dist "${{ matrix.dist }}" \
@@ -295,21 +268,10 @@ jobs:
             scripts
             debian-repo-setup
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.10.0
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
-
       - name: Check if already published
         id: published
-        env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
-          DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
         working-directory: packaging-repo
         run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
           bash "$GITHUB_WORKSPACE/python-pipeline/scripts/ci-check-published.sh" \
             "${{ matrix.dist }}" "${{ matrix.arch }}"
 
@@ -328,6 +290,12 @@ jobs:
           DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
           DEPLOY_INCOMING: ${{ vars.DEPLOY_INCOMING }}
         run: bash python-pipeline/scripts/ci-deploy-preflight.sh
+
+      - name: Setup SSH
+        if: steps.published.outputs.skip != 'true'
+        uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
 
       - name: Publish to APT droplet
         if: steps.published.outputs.skip != 'true'

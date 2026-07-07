@@ -77,20 +77,9 @@ jobs:
           fi
           ls -la dist/*.deb
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.10.0
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
-
       - name: Check if already published
         id: published
-        env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
-          DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
         run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
           bash scripts/ci-check-published.sh --deb dist \
             "${{ steps.resolve.outputs.dist }}" "${{ env.ARCH }}"
 
@@ -102,6 +91,12 @@ jobs:
           DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
           DEPLOY_INCOMING: ${{ vars.DEPLOY_INCOMING }}
         run: bash scripts/ci-deploy-preflight.sh
+
+      - name: Setup SSH
+        if: steps.published.outputs.skip != 'true'
+        uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
 
       - name: Publish to APT droplet
         if: steps.published.outputs.skip != 'true'
