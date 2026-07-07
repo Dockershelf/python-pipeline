@@ -20,7 +20,7 @@ fi
 CODENAME="${1:?usage: ci-check-published.sh [--deb <dir>] <trixie|unstable> <arch>}"
 ARCH="${2:?usage: ci-check-published.sh [--deb <dir>] <trixie|unstable> <arch>}"
 
-APT_URL="${DOCKERSHELF_APT_URL:-https://apt.luisalejandro.org/dockershelf}"
+APT_URL="${DOCKERSHELF_APT_URL:-https://apt.dockershelf.com/dockershelf}"
 
 write_outputs() {
     local skip="$1"

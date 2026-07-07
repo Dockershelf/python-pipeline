@@ -29,11 +29,11 @@ export DEBEMAIL
 endif
 export DOCKERSHELF_SUITES ?= trixie unstable
 export DOCKERSHELF_REFERENCE_PY ?= 3.13
-export DOCKERSHELF_DEPLOY_HOST ?= apt.luisalejandro.org
+export DOCKERSHELF_DEPLOY_HOST ?= apt.dockershelf.com
 export DOCKERSHELF_DEPLOY_USER ?= deploy
 export DOCKERSHELF_DEPLOY_DIR ?= /var/www/debian
 export DOCKERSHELF_DEPLOY_INCOMING ?= /var/www/debian/incoming
-export DOCKERSHELF_APT_URL ?= https://apt.luisalejandro.org/dockershelf
+export DOCKERSHELF_APT_URL ?= https://apt.dockershelf.com/dockershelf
 export DOCKERSHELF_GITHUB_ORG ?= Dockershelf
 
 PY_VERSIONS := 3.10 3.11 3.12 3.13 3.14

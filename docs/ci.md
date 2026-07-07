@@ -63,7 +63,7 @@ Full droplet + GitHub wiring: [`docs/deploy-setup.md`](deploy-setup.md).
 
 | Name | Example |
 |------|---------|
-| `DEPLOY_HOST` | `apt.luisalejandro.org` |
+| `DEPLOY_HOST` | `apt.dockershelf.com` |
 | `DEPLOY_USER` | `deploy` |
 | `DEPLOY_DIR` | `/var/www/debian` |
 | `DEPLOY_INCOMING` | `/var/www/debian/incoming` |

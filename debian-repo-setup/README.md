@@ -2,7 +2,7 @@
 
 Templates and scripts for hosting Dockershelf-built `.deb` packages with **reprepro** and **nginx**.
 
-Public URL: **`https://apt.luisalejandro.org/dockershelf/`**
+Public URL: **`https://apt.dockershelf.com/dockershelf/`**
 
 ## Layout on the droplet
 
@@ -33,7 +33,7 @@ export DEPLOY_PUBLIC_KEY="$(cat keys/dockershelf-deploy-ci.pub)"
 ./bootstrap-droplet.sh
 ```
 
-Configure DNS (`apt.luisalejandro.org` A record → droplet IP), TLS, and GitHub secrets — see [`docs/deploy-setup.md`](../docs/deploy-setup.md).
+Configure DNS (`apt.dockershelf.com` A record → droplet IP), TLS, and GitHub secrets — see [`docs/deploy-setup.md`](../docs/deploy-setup.md).
 
 ## Publish flow
 
@@ -48,7 +48,7 @@ This rsyncs `dist/*.deb` to the droplet and runs `import-incoming.sh` over SSH.
 ## Client apt line
 
 ```text
-deb [signed-by=/usr/share/keyrings/dockershelf.gpg] https://apt.luisalejandro.org/dockershelf trixie main
+deb [signed-by=/usr/share/keyrings/dockershelf.gpg] https://apt.dockershelf.com/dockershelf trixie main
 ```
 
 Use codename matching the image base (`trixie` or `unstable`).
@@ -56,7 +56,7 @@ Use codename matching the image base (`trixie` or `unstable`).
 Install the signing public key on clients:
 
 ```bash
-curl -fsSL https://apt.luisalejandro.org/dockershelf/dockershelf-apt-signing.pub \
+curl -fsSL https://apt.dockershelf.com/dockershelf/dockershelf-apt-signing.pub \
   | gpg --dearmor | sudo tee /usr/share/keyrings/dockershelf.gpg >/dev/null
 ```
 
@@ -96,7 +96,7 @@ If you prefer not to use `bootstrap-droplet.sh`:
 
 6. **TLS**
    ```bash
-   sudo certbot --nginx -d apt.luisalejandro.org
+   sudo certbot --nginx -d apt.dockershelf.com
    ```
 
 7. **Deploy user SSH** — add CI public key to `~deploy/.ssh/authorized_keys`.

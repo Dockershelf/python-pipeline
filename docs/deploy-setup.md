@@ -3,7 +3,7 @@
 End-to-end checklist to wire GitHub Actions publish to the DigitalOcean APT droplet.
 No packaging run is required to complete these steps.
 
-Public repository URL: **`https://apt.luisalejandro.org/dockershelf/`**
+Public repository URL: **`https://apt.dockershelf.com/dockershelf/`**
 
 ## Architecture
 
@@ -22,9 +22,9 @@ Create an **A** record:
 
 | Name | Value |
 |------|-------|
-| `apt.luisalejandro.org` | Droplet public IP (e.g. `159.223.128.61`) |
+| `apt.dockershelf.com` | Droplet public IP (e.g. `159.223.128.61`) |
 
-Verify: `dig +short apt.luisalejandro.org`
+Verify: `dig +short apt.dockershelf.com`
 
 ## 2. Droplet bootstrap
 
@@ -47,7 +47,7 @@ See [`debian-repo-setup/README.md`](../debian-repo-setup/README.md) for layout a
 Enable TLS when DNS resolves:
 
 ```bash
-sudo certbot --nginx -d apt.luisalejandro.org
+sudo certbot --nginx -d apt.dockershelf.com
 ```
 
 ## 3. GitHub secrets
@@ -66,13 +66,13 @@ Set at org level (recommended) or per repo:
 
 | Variable | Value |
 |----------|-------|
-| `DEPLOY_HOST` | `apt.luisalejandro.org` |
+| `DEPLOY_HOST` | `apt.dockershelf.com` |
 | `DEPLOY_USER` | `deploy` |
 | `DEPLOY_DIR` | `/var/www/debian` |
 | `DEPLOY_INCOMING` | `/var/www/debian/incoming` |
 
 ```bash
-gh variable set DEPLOY_HOST --org Dockershelf --body "apt.luisalejandro.org"
+gh variable set DEPLOY_HOST --org Dockershelf --body "apt.dockershelf.com"
 gh variable set DEPLOY_USER --org Dockershelf --body "deploy"
 gh variable set DEPLOY_DIR --org Dockershelf --body "/var/www/debian"
 gh variable set DEPLOY_INCOMING --org Dockershelf --body "/var/www/debian/incoming"
@@ -98,7 +98,7 @@ Requires `DEPLOY_SSH_KEY` and all `DEPLOY_*` variables. Does not upload packages
 2. **py3.14 → Actions → packaging → Run workflow** with `publish: true`.
 3. On the droplet after publish:
    ```bash
-   curl -I https://apt.luisalejandro.org/dockershelf/dists/trixie/Release
+   curl -I https://apt.dockershelf.com/dockershelf/dists/trixie/Release
    ```
 
 ## Local publish
@@ -115,7 +115,7 @@ make publish DIST=trixie
 ## Client apt source
 
 ```text
-deb [signed-by=/usr/share/keyrings/dockershelf.gpg] https://apt.luisalejandro.org/dockershelf trixie main
+deb [signed-by=/usr/share/keyrings/dockershelf.gpg] https://apt.dockershelf.com/dockershelf trixie main
 ```
 
 Export the signing key from the droplet (`/var/www/debian/dockershelf-apt-signing.pub`) for image builds and client setup.

@@ -12,7 +12,7 @@ DIST=""
 PY=""
 DIST_DIR=""
 FROM_APT=0
-APT_URL="${DOCKERSHELF_APT_URL:-https://apt.luisalejandro.org/dockershelf}"
+APT_URL="${DOCKERSHELF_APT_URL:-https://apt.dockershelf.com/dockershelf}"
 ARCH="${DOCKERSHELF_ARCH:-amd64}"
 
 while [[ $# -gt 0 ]]; do

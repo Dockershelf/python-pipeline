@@ -25,7 +25,7 @@ done
 if [[ ${#missing[@]} -gt 0 ]]; then
     echo "missing required deploy variables: ${missing[*]}" >&2
     echo "expected values (see docs/deploy-setup.md):" >&2
-    echo "  DEPLOY_HOST=apt.luisalejandro.org" >&2
+    echo "  DEPLOY_HOST=apt.dockershelf.com" >&2
     echo "  DEPLOY_USER=deploy" >&2
     echo "  DEPLOY_DIR=/var/www/debian" >&2
     echo "  DEPLOY_INCOMING=/var/www/debian/incoming" >&2

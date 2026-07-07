@@ -29,7 +29,7 @@ REQUIRED_SECRET=DEPLOY_SSH_KEY
 REQUIRED_VARS=(DEPLOY_HOST DEPLOY_USER DEPLOY_DIR DEPLOY_INCOMING)
 
 EXPECTED_VARS=(
-    "DEPLOY_HOST=apt.luisalejandro.org"
+    "DEPLOY_HOST=apt.dockershelf.com"
     "DEPLOY_USER=deploy"
     "DEPLOY_DIR=/var/www/debian"
     "DEPLOY_INCOMING=/var/www/debian/incoming"

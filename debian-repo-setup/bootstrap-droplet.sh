@@ -11,7 +11,7 @@
 #   DEPLOY_PUBLIC_KEY    SSH public key for CI rsync/SSH (required)
 #   DEPLOY_PUBLIC_KEY_FILE  path to public key file (alternative)
 #   REPO_ROOT            /var/www/debian (default)
-#   APT_HOSTNAME         apt.luisalejandro.org (default)
+#   APT_HOSTNAME         apt.dockershelf.com (default)
 #   SIGNWITH_KEY_ID      existing GPG key id for reprepro (optional; generates if unset)
 #   SKIP_APT_INSTALL     set to 1 to skip apt-get install
 
@@ -27,7 +27,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEPLOY_USER="${DEPLOY_USER:-deploy}"
 REPO_ROOT="${REPO_ROOT:-/var/www/debian}"
 INCOMING="${REPO_ROOT}/incoming"
-APT_HOSTNAME="${APT_HOSTNAME:-apt.luisalejandro.org}"
+APT_HOSTNAME="${APT_HOSTNAME:-apt.dockershelf.com}"
 IMPORT_DEST="/usr/local/bin/dockershelf-import-incoming"
 NGINX_SITE="/etc/nginx/sites-available/dockershelf-apt"
 
