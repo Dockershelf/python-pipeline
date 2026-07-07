@@ -62,12 +62,6 @@ gh secret set DEPLOY_SSH_KEY --org Dockershelf < keys/dockershelf-deploy-ci
 
 Org secrets are inherited by `python-pipeline` and all `py3.*` repos when access is granted.
 
-Optional:
-
-| Secret | When |
-|--------|------|
-| `GH_PACKAGES_TOKEN` | Only if GHCR pull needs a separate token |
-
 ## 4. GitHub variables
 
 Set at org level (recommended) or per repo:

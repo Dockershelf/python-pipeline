@@ -59,7 +59,6 @@ Full droplet + GitHub wiring: [`docs/deploy-setup.md`](deploy-setup.md).
 | Name | Purpose |
 |------|---------|
 | `DEPLOY_SSH_KEY` | Private SSH key for `DEPLOY_USER@DEPLOY_HOST` |
-| `GH_PACKAGES_TOKEN` | Optional; defaults to `GITHUB_TOKEN` with `packages: write` on `python-pipeline` |
 
 ### Repository variables
 
