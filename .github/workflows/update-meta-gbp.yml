@@ -72,17 +72,17 @@ jobs:
       - name: meta-gbp update
         run: python-pipeline/meta-gbp update --no-interactive
 
-      - name: Export revision
-        id: rev
-        run: |
-          echo "rev=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          echo "py=$(echo '${{ github.repository }}' | cut -d/ -f2 | sed 's/^py//')" >> "$GITHUB_OUTPUT"
-          echo "py_repo_dir=$GITHUB_WORKSPACE" >> "$GITHUB_OUTPUT"
-
+      # Fetch/rebase before exporting rev so build/smoke/publish use the SHA that lands on main.
+      # Stale origin/main (e.g. commits pushed after checkout) used to cause non-fast-forward push failures.
       - name: Push update commits
         run: |
           git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git fetch origin main
           if git rev-parse origin/main >/dev/null 2>&1; then
+            behind="$(git rev-list --count HEAD..origin/main || true)"
+            if [[ "${behind}" != "0" ]]; then
+              git rebase origin/main
+            fi
             ahead="$(git rev-list --count origin/main..HEAD || true)"
           else
             ahead="$(git rev-list --count HEAD || true)"
@@ -90,6 +90,13 @@ jobs:
           if [[ "${ahead}" != "0" ]]; then
             git push origin HEAD:main
           fi
+
+      - name: Export revision
+        id: rev
+        run: |
+          echo "rev=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "py=$(echo '${{ github.repository }}' | cut -d/ -f2 | sed 's/^py//')" >> "$GITHUB_OUTPUT"
+          echo "py_repo_dir=$GITHUB_WORKSPACE" >> "$GITHUB_OUTPUT"
 
   build:
     needs: update
