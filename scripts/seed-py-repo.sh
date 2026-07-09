@@ -26,11 +26,18 @@ PY_MAJOR="${PY_MINOR%%.*}"
 PY_PATCH="${PY_MINOR##*.}"
 PY_MINOR_NEXT="${PY_MAJOR}.$((PY_PATCH + 1))"
 
+# Stagger Python builds: Tuesdays, every 2 hours with modulo 24 wrapping
+# Ensures no collisions with 5-version limit and auto-wraps past midnight
+CRON_HOUR=$(( ((PY_PATCH - 10) * 2) % 24 ))
+packaging_cron() {
+    printf '0 %d * * 2' "$CRON_HOUR"
+}
+
 cp -a "${TEMPLATE}" "${TARGET}"
 
 while IFS= read -r -d '' file; do
-    if grep -q '__PY_MINOR__\|__PY_MINOR_DIR__\|__PY_MINOR_NEXT__' "${file}" 2>/dev/null; then
-        perl -pi -e "s/__PY_MINOR_DIR__/py${PY_MINOR}/g; s/__PY_MINOR_NEXT__/${PY_MINOR_NEXT}/g; s/__PY_MINOR__/${PY_MINOR}/g" "${file}"
+    if grep -qE '__PY_MINOR__|__PY_MINOR_DIR__|__PY_MINOR_NEXT__|__PACKAGING_CRON__' "${file}" 2>/dev/null; then
+        perl -pi -e "s/__PY_MINOR_DIR__/py${PY_MINOR}/g; s/__PY_MINOR_NEXT__/${PY_MINOR_NEXT}/g; s/__PY_MINOR__/${PY_MINOR}/g; s/__PACKAGING_CRON__/$(packaging_cron | sed 's/[\/&]/\\&/g')/g" "${file}"
     fi
 done < <(find "${TARGET}" -type f -print0)
 
