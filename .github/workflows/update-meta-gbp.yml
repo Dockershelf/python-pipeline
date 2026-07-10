@@ -190,6 +190,7 @@ jobs:
           name: debs-${{ matrix.dist }}-${{ matrix.arch }}
           path: python-pipeline/dist/*.deb
           if-no-files-found: error
+          retention-days: 7
 
   smoke:
     needs: [build, update]
